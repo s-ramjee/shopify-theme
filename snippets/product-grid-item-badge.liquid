@@ -1,0 +1,22 @@
+{% comment %}
+  @param class_root {String}
+    Base class root
+
+  @param badge_text {String}
+    The text displayed on the badge
+
+  @param badge_color {String}
+    Hex code of the badge's text color
+
+  @param badge_background_color {String}
+    Hex code of the badge's background color
+{% endcomment %}
+
+{%- if badge != blank -%}
+  <span
+    class="productgriditem__badge"
+    style="color: {{ badge.badge_text_color }}; background-color: {{ badge.badge_background_color }}"
+  >
+    {{ badge.badge_text }}
+  </span>
+{%- endif -%}

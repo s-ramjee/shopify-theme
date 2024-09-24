@@ -1,0 +1,111 @@
+{% comment %}
+  @param section Object
+         Required section containing settings
+
+  @param onboarding Bool
+         Triggers onboarding helper class and functionality
+
+  @param article Object
+{% endcomment %}
+
+{%- capture excerpt_class -%}
+  article--excerpt-wrapper
+  article--excerpt-wrapper--featured
+  {% if article.image %}
+    article--excerpt-wrapper--has-image
+  {% else %}
+    article--excerpt-wrapper--no-image
+  {% endif %}
+{%- endcapture -%}
+
+<style>
+  .article--excerpt-wrapper--featured .article--excerpt-content {
+    display: flex;
+    padding: 32px 80px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 32px;
+    flex: 1 0 0;
+    align-self: stretch;
+  }
+
+  @media (max-width: 767px) {
+  .article--excerpt-wrapper--featured .article--excerpt-content {
+    padding: 32px 40px;
+    gap: 16px;
+  }
+}
+
+  .article--excerpt-readmore svg {
+    display: none;
+  }
+
+  .article--excerpt-wrapper--featured .article--excerpt-text {
+    color: {{ settings.color_main_black }};
+  }
+
+  .article--excerpt-wrapper--featured {
+    background: var(--beige, #FCF4EB);
+  }
+
+  .article--excerpt-wrapper--featured .article--excerpt-title a {
+    color: {{ settings.color_main_black }};
+    font-family: Playfair Display;
+    font-size: 42px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
+</style>
+
+<article class="{{ excerpt_class | strip_newlines }}">
+
+  {% if article.image %}
+    <a
+      class="article--excerpt-image"
+      href="{{ article.url }}"
+      tabindex="-1"
+      {%
+        render 'rimg',
+        img: article.image,
+        lazy: true,
+        size: '526x526',
+        crop: 'center',
+        background: true
+      %}
+    >
+      {%
+        render 'rimg',
+        img: article.image,
+        lazy: true,
+        canvas: true,
+        crop: 'center',
+        size: '526x526'
+      %}
+    </a>
+  {% endif %}
+
+  <div class="article--excerpt-content">
+    <h2 class="article--excerpt-title">
+      <a href="{{ article.url }}">
+        {{ article.title }}
+      </a>
+    </h2>
+
+    {% if article.excerpt_or_content != blank %}
+      <div class="article--excerpt-text rte">
+        {% if article.excerpt == blank %}
+          <p>{{ article.content | strip_html | truncatewords: 30 }}</p>
+        {% else %}
+          {{ article.excerpt }}
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <a class="article--excerpt-button" href="{{ article.url }}" aria-label="read {{ article.title }}">
+      {{ 'blog.general.read_more' | t }}
+    </a>
+  </div>
+
+</article>

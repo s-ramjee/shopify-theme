@@ -1,0 +1,59 @@
+<h2 class="account-header">{{ 'customers.account.album.title' | t }}</h2>
+<div class="album-container">
+  <div class="album-content">
+    <span class="mb-3">
+      {{ 'customers.account.album.access' | t }}
+    </span>
+    {% comment %}<a>
+      <button
+        class="button-primary product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded mb-3"
+      >
+        <span class="atc-button--text">
+          {{ 'customers.account.album.access_button' | t }}
+        </span>
+      </button>
+    </a>
+    {% endcomment %}
+  </div>
+</div>
+
+<style>
+  .customer-account-block{
+    height: 100%;
+  }
+  .album-content{
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+  }
+  .album-content > span {
+    display: flex;
+    text-align: center;
+    color: #1F1F1F;
+    text-align: center;
+    font-family: DM Sans;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .album-content > a {
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .album-content button {
+    padding: 1rem 3rem;
+  }
+  .album-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+</style>
+<script>
+  const token = localStorage.getItem("outil_access_token");
+  document.addEventListener("DOMContentLoaded",()=>{
+    const link = document.querySelector(".album-container a");
+    link.href = OUTIL_PERSO_URL?`token=${token}`
+  })
+</script>

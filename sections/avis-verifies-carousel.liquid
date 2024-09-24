@@ -1,0 +1,24 @@
+{% schema %}
+  {
+    "name": "Avis vérifiés - carousel",
+    "settings": [],
+    "presets": [
+      {
+        "name": "Avis vérifiés - carousel"
+      }
+    ]
+  }
+{% endschema %}
+
+{% assign locale = request.locale.iso_code  %}
+{% case locale %} 
+{% when "it" %}
+  <div class="skeepers_carousel_container" data-slides-count="3"></div>
+  <script async charset="utf-8" src="//widgets.rr.skeepers.io/carousel/c52cb6e8-561a-e4f4-9929-b40ee5268824/5f5d6684-6991-47a8-b0ca-6ce210655bf3.js"></script>
+{% when "de" %}
+<div class="skeepers_carousel_container" data-slides-count="3"></div>
+<script async charset="utf-8" src="//widgets.rr.skeepers.io/carousel/a5913fc5-4e78-3e34-ede7-2e4cd18f6f19/a81530fb-6d93-40f9-b665-0c2ecbee3635.js"></script> 
+{% else %}
+<div class="skeepers_carousel_container" data-slides-count="3"></div>
+<script async charset="utf-8" src="//widgets.rr.skeepers.io/carousel/335fee34-8fcd-3f84-b50b-dc57d8a25461/850c131b-013f-4502-ad02-b8472aec2180.js"></script>
+{% endcase %}

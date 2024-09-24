@@ -1,0 +1,110 @@
+<style>
+  .modal-dismiss svg{
+    width: 20px;
+    height:auto;
+  }
+  .modal-dismiss{
+    position: absolute;
+    right: 15px;
+    top: 15px
+  }
+</style>
+<h2 class="account-header">{{ 'customers.addresses.title' | t }}</h2>
+{%- if customer.addresses_count > 0 -%}
+<div class="adresses">
+  {%- for address in customer.addresses -%}
+    <div class="adresse" data-address-id="{{ address_id }}">
+      <div class="adresse-text">
+        <span class="adresse-title">
+          {{- address.first_name }}
+          {{ address.last_name }}
+          {%- if address == customer.default_address -%}
+            ({{ 'customers.addresses.default_address_message' | t }})
+          {%- endif -%}
+        </span>
+        <div class="adresse-content">
+          {%- if address.address1 -%}
+            <span>{{ address.address1 }}</span>
+          {%- endif -%}
+          {%- if address.address2 -%}
+            <span>{{ address.address2 }}</span>
+          {%- endif -%}
+          {%- if address.zip or address.city -%}
+            <span>
+              {{- address.zip }}
+              {{ address.city -}}
+            </span>
+          {%- endif -%}
+          {%- if address.country -%}
+            <span>{{ address.country }}</span>
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="adresses-buttons">
+        <button class="text-only-btn" type="button" data-edit-address="{{ address.id }}" name="edit-btn-{{ section.id }}">
+          {{ 'customers.addresses.edit' | t }}
+        </button>
+
+        <button
+          class="text-only-btn"
+          type="button"
+          data-delete-address="{{ address.id }}"
+          data-delete-address-message="{{ "customers.addresses.delete_confirmation" | t }}"
+        >
+          {{ 'customers.addresses.delete' | t }}
+        </button>
+      </div>
+    </div>
+  {%- endfor -%}
+</div>
+  {%- endif -%}
+<button class="product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded change-password-btn mt-4"
+  id="modal-btn-{{ section.id }}">
+  <span class="atc-button--text">
+    {{ 'customers.addresses.add_new_address' | t }}
+  </span>
+</button>
+
+<div class="custom-modal-overlay" id="overlay-{{ section.id }}"></div>
+<div class="custom-modal" id="modal-{{ section.id }}">
+  <span id="modal-dismiss" class="modal-dismiss">{%- render 'icon-library', id:'cross' -%}</span>
+    {%
+      render 'account-address-form',
+      address: customer.new_address,
+      visible: true
+    %}
+
+    {% for address in customer.addresses %}
+      {%
+        render 'account-address-form',
+        address: address,
+        visible: false
+      %}
+    {% endfor %}
+</div>
+
+
+<script>
+  $(document).ready(function(){
+document.getElementById('modal-btn-{{ section.id }}').addEventListener('click', function() {
+  document.getElementById('overlay-{{ section.id }}').classList.add('is-visible');
+  document.getElementById('modal-{{ section.id }}').classList.add('is-visible');
+   $('.account-address-form:not([data-address-id="new"])').removeClass('visible');
+  $('.account-address-form[data-address-id="new"]').addClass('visible');
+});
+  $('[name="edit-btn-{{ section.id }}"]').on("click", function() {
+  document.getElementById('overlay-{{ section.id }}').classList.add('is-visible');
+  document.getElementById('modal-{{ section.id }}').classList.add('is-visible');
+});
+
+    document.getElementById("modal-dismiss").addEventListener('click', ()=>{
+      document.getElementById('overlay-{{ section.id }}').classList.remove('is-visible');
+      document.getElementById('modal-{{ section.id }}').classList.remove('is-visible');
+    });
+    
+document.getElementById('overlay-{{ section.id }}').addEventListener('click', function() {
+  document.getElementById('overlay-{{ section.id }}').classList.remove('is-visible');
+  document.getElementById('modal-{{ section.id }}').classList.remove('is-visible');
+});
+  })
+</script>

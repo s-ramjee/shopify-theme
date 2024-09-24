@@ -1,0 +1,18 @@
+<script>
+  window.dataLayer.push({
+    event: "view_cart",
+    timestamp: Date.now(),
+    items: [
+      {% for item in cart.items %}
+        {
+          "item_name": "{%- if item.product.metafields.custom.original_product -%}{{ item.product.metafields.custom.original_product.value.title }}{%- else -%}{{ item.product.title }}{%- endif -%}",
+          "item_id": "{%- if item.product.metafields.custom.original_product -%}{{ item.product.metafields.custom.original_product.value.variants.first.sku }}{%- else -%}{{ item.product.variants.first.sku }}{%- endif -%}",
+          "price": "{{item.price | money}}",
+          item_category: "{%- if item.product.metafields.custom.original_product -%}{{item.product.metafields.custom.original_product.collections.first.title}}{% else %}{{item.product.collections.first.title}}{%- endif -%}",
+          item_category2: "{%- if item.product.metafields.custom.original_product -%}{%- if product.metafields.custom.main_collection -%}{%- if item.product.metafields.custom.main_collection -%}{{ item.product.metafields.custom.main_collection.value.title }}{% else %}{{item.product.collections.last.title}}{%- endif -%}{%- endif -%}{% else %}{{item.product.collections.last.title}}{%- endif -%}",
+          quantity: {%-if item.product.type == 'Card'-%}{{ item.variant.title }}{% else %}{{ item.quantity }}{% endif %},
+        },
+      {% endfor %}
+    ]
+  });
+</script>

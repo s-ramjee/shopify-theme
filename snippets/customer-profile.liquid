@@ -1,0 +1,98 @@
+<style>
+  .modify_button {
+    width: fit-content;
+  }
+</style>
+
+<h2 class="account-header">{{ 'customers.account.profile.header' | t }}</h2>
+<h3 class="account-subtitle">{{ 'customers.account.profile.info' | t }}</h3>
+<div class="form-fields-columns">
+  <div class="d-flex justify-content-between w-100 my-3">
+    <div class="form-field form-field--half mx-0">
+      <div style="position:relative">
+        <input
+          class="form-field-input form-field-text"
+          id="customer_name"
+          type="text"
+          value="{{ customer.first_name }}"
+          disabled
+        >
+
+        <label class="form-field-title" for="customer_name">
+          {{ 'customers.forms.first_name' | t }}
+        </label>
+      </div>
+    </div>
+
+    <div class="form-field form-field--half mx-0">
+      <div style="position: relative">
+        <input
+          class="form-field-input form-field-text"
+          id="customer_last_name"
+          type="text"
+          value="{{ customer.last_name }}"
+          disabled
+        >
+
+        <label class="form-field-title" for="customer_last_name">
+          {{ 'customers.forms.last_name' | t }}
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between w-100 my-3">
+    <div class="form-field form-field--half mx-0">
+      <div style="position:relative">
+        <input
+          class="form-field-input form-field-text"
+          id="customer_email"
+          type="text"
+          value="{{ customer.email }}"
+          autocorrect="off"
+          autocapitalize="off"
+          disabled
+        >
+
+        <label class="form-field-title" for="customer_name">
+          {{ 'customers.forms.email' | t }}
+        </label>
+      </div>
+    </div>
+
+    <div class="form-field form-field--half mx-0">
+      <div style="position: relative">
+        <input
+          class="form-field-input form-field-text"
+          id="customer_phone"
+          type="text"
+          value="{{ customer.phone }}"
+          disabled
+        >
+
+        <label class="form-field-title" for="customer_phone">
+          {{ 'customers.forms.phone' | t }}
+        </label>
+      </div>
+    </div>
+  </div>
+
+  {% comment %}
+  <button id="modify-password-button" class="product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded change-password-btn mt-3">
+    <span class="atc-button--text">
+      {{ 'customers.account.profile.change_password' | t }}
+    </span>
+  </button>
+  {% endcomment %}
+
+<script>
+  var show_password_change_modal = false;
+
+  document.querySelector('#modify-password-button').addEventListener("click", function() {
+    if (show_password_change_modal) {
+      show_password_change_modal = false;
+    } else {
+      show_password_change_modal = true;
+    }
+  });
+</script>

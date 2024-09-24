@@ -1,0 +1,205 @@
+{% comment %}
+  @param menu LinkList
+    List of menu items
+
+  @param block Block
+    The block with the meganav properties
+
+{% endcomment %}
+
+{% assign image_grid = false %}
+{% if block.settings.submenu_layout contains 'images' %}
+  {% assign image_grid = true %}
+{% endif %}
+
+{%- capture meganav_classes -%}
+  navmenu-submenu
+  navmenu-meganav
+  navmenu-meganav--desktop
+{%- endcapture -%}
+
+{%- capture navmenu_classes -%}
+  navmenu
+  navmenu-depth-2
+  navmenu-meganav-sidenav__items
+  {% if image_grid %}
+    navmenu-meganav-sidenav__items--images
+  {% else %}
+    navmenu-meganav-sidenav__items--text-columns
+  {% endif %}
+{%- endcapture -%}
+
+<div
+  class="{{ meganav_classes | strip_newlines }}"
+  data-navmenu-submenu
+  data-meganav-menu
+  data-meganav-id="{{ block.id }}"
+  {% unless block.settings.image_aspect_ratio == 'natural' %}
+    data-meganav-sidenav-image-aspect-ratio="{{ block.settings.image_aspect_ratio }}"
+    data-meganav-sidenav-image-crop="{{ block.settings.image_crop }}"
+  {% endunless %}
+  id="meganav-{{ block.id }}"
+>
+  <div
+    class="
+      navmenu-meganav-wrapper
+      navmenu-meganav-sidenav__wrapper
+      {% if image_grid %}
+        navmenu-meganav-sidenav__wrapper--images
+      {% endif %}
+    "
+  >
+    <ul
+      class="{{ navmenu_classes | strip_newlines }}"
+      data-navmenu
+    >
+      {% for menu_item in menu.links %}
+        {% unless menus_to_exclude contains menu_item.title %}
+        {%- capture navmenu_item_classes -%}
+          navmenu-item
+          navmenu-item-parent
+          navmenu-id-{{ menu_item.title | handle }}
+          navmenu-meganav-sidenav__item
+        {%- endcapture -%}
+
+        {% assign has_subnav = false %}
+        {% if menu_item.links.size > 0 %}
+          {% assign has_subnav = true %}
+        {% endif %}
+
+        <li
+          class="{{ navmenu_item_classes | strip_newlines }}"
+          {% if has_subnav %}
+            data-navmenu-trigger
+            data-navmenu-parent
+          {% endif %}
+          {{ block.shopify_attributes }}
+        >
+          {% if has_subnav %}
+            <details data-navmenu-details>
+            <summary
+              data-href="{{ menu_item.url }}"
+          {% else %}
+            <a
+              href="{{ menu_item.url }}"
+          {% endif %}
+            class="
+              navmenu-item-text
+              navmenu-link
+              {% if has_subnav %}
+                navmenu-link-parent
+              {% endif %}
+              navmenu-meganav-sidenav__item-text
+            "
+            {% if has_subnav %}
+              aria-haspopup="true"
+              aria-expanded="false"
+          {% endif %}
+          >
+            <span class="navmenu-meganav-sidenav__submenu-wrapper">
+              <span>{{ menu_item.title }}</span>
+              {% if has_subnav %}
+                <span
+                  class="navmenu-icon navmenu-icon-depth-2"
+                >
+                  {% render 'icon-chevron-down-small' %}
+                </span>
+              {% endif %}
+            </span>
+          {% if has_subnav %}
+            </summary>
+          {% else %}
+            </a>
+          {% endif %}
+
+          {% case block.settings.submenu_layout %}
+            {% when 'product_images' %}
+              {% assign show_images_for = 'product_link' %}
+            {% when 'collection_images' %}
+              {% assign show_images_for = 'collection_link' %}
+          {% endcase %}
+
+          {%
+            render 'navlist',
+            menu_list: linklists[menu_item.handle].links,
+            depth: 3,
+            max_depth: 3,
+            aria_expanded: true,
+            is_mobile: false,
+            show_images_for: show_images_for,
+            menus_to_exclude: menus_to_exclude,
+          %}
+          {% if has_subnav %}
+            </details>
+          {% endif %}
+
+        </li>
+          {% endunless %}
+      {% endfor %}
+    </ul>
+    <div class="d-sm-hidden meganav-products">
+      {%- assign elements_count = 0 -%}
+      {% if block.settings.product1 != blank %}
+        {%- assign elements_count = elements_count | plus:1 -%}
+        {% render 'product-grid-item', product: block.settings.product1, simple: true %}
+      {% endif %}
+      {% if block.settings.product2 != blank %}
+        {%- assign elements_count = elements_count | plus:1 -%}
+        {% render 'product-grid-item', product: block.settings.product2, simple: true %}
+      {% endif %}
+      {%- if "image1" != blank and "image1_text" != blank and elements_count <2 -%}
+        {%- assign elements_count = elements_count | plus:1 -%}
+        {%- render 'meganav-sidenav-image', image: block.settings.image1, image_text: block.settings.image1_text, image_url: block.settings.image1_url -%}
+      {%- endif -%}
+      {%- if "image2" != blank and "image2_text" != blank and elements_count <2 -%}
+        {%- assign elements_count = elements_count | plus:1 -%}
+        {%- render 'meganav-sidenav-image', image: block.settings.image2, image_text: block.settings.image2_text, image_url: block.settings.image2_url -%}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+<script>
+
+  document.addEventListener("DOMContentLoaded", function (){
+    {% assign jsSafeId = block.id | replace: "-", "" %}
+    const mainDiv{{jsSafeId}} = document.getElementById("meganav-{{ block.id }}");
+    
+    const secondDepth{{jsSafeId}} = document.querySelector("#meganav-{{ block.id }} .navmenu-depth-2");
+    if(secondDepth{{jsSafeId}})
+    {
+      secondDepth{{jsSafeId}}.style.width = "fit-content";
+      const thirdDepths{{jsSafeId}} = document.querySelectorAll("#meganav-{{ block.id }} .navmenu-depth-3");
+      let thirdDepthWidth{{jsSafeId}} = 0;
+      if(thirdDepths{{jsSafeId}}){
+        const disp = mainDiv{{jsSafeId}}.getAttribute("data-animation-state");
+        mainDiv{{jsSafeId}}.setAttribute("data-animation-state","open");
+        const dispParent = mainDiv{{jsSafeId}}.parentNode.getAttribute("open");
+        mainDiv{{jsSafeId}}.parentNode.setAttribute("open","open");
+        thirdDepths{{jsSafeId}}.forEach((thirdDepth) => {
+          thirdDepth.parentNode.setAttribute("open","open");
+          thirdDepth.style.left = secondDepth{{jsSafeId}}.scrollWidth+"px";
+          thirdDepthWidth{{jsSafeId}} = Math.max(thirdDepthWidth{{jsSafeId}}, thirdDepth.clientWidth);
+          thirdDepth.parentNode.removeAttribute("open");
+      })
+      const productsDiv{{jsSafeId}} = document.querySelector("#meganav-{{ block.id }} .meganav-products");
+      productsDiv{{jsSafeId}}.style.left = (thirdDepthWidth{{jsSafeId}} + secondDepth{{jsSafeId}}.clientWidth +30) +"px"; 
+      mainDiv{{ jsSafeId }}.setAttribute("data-animation-state", disp);
+      mainDiv{{ jsSafeId }}.parentNode.setAttribute("open",dispParent);
+      const meganavWrapper{{jsSafeId}} = document.querySelector("#meganav-{{block.id}} .navmenu-meganav-wrapper");
+        const observer{{jsSafeId}} = new ResizeObserver(function(e) {
+          if(meganavWrapper{{ jsSafeId }}.scrollWidth > meganavWrapper{{ jsSafeId }}.clientWidth){
+            if (productsDiv{{jsSafeId}} && productsDiv{{jsSafeId}}.children && productsDiv{{jsSafeId}}.children.length>1){
+              productsDiv{{jsSafeId}}.children[productsDiv{{jsSafeId}}.children.length -1].style.display = "none";
+            }
+          }
+          else{
+              productsDiv{{jsSafeId}}.children[productsDiv{{jsSafeId}}.children.length -1].style.display = "block";
+            }
+        });
+        observer{{jsSafeId}}.observe(meganavWrapper{{jsSafeId}});
+      }
+      }
+    }
+  );
+</script>
+      

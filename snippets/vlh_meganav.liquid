@@ -1,0 +1,124 @@
+{% comment %}
+  @param menu LinkList
+    List of menu items
+
+  @param block Block
+    The block with the meganav properties
+
+{% endcomment %}
+
+{%- capture meganav_classes -%}
+  navmenu-submenu
+  navmenu-meganav
+  navmenu-meganav--desktop
+{%- endcapture -%}
+
+{%- capture navmenu_classes -%}
+  navmenu
+  navmenu-depth-2
+  navmenu-meganav-standard__items
+{%- endcapture -%}
+
+{% assign menu = block.settings.content_menu %}
+
+<style>
+  .vlh_megamenu .navmenu-meganav-standard__items+.navmenu-meganav-standard__image-last {
+    margin-left: 1.1875rem !important;
+    display: none !important;
+  }
+
+  @media (min-width:1400px) {
+    .vlh_megamenu .navmenu-meganav-standard__items+.navmenu-meganav-standard__image-last {
+      display: block !important;
+    }
+
+    .vlh_megamenu .navmenu-meganav-standard__items {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: start !important;
+        justify-items: start !important;
+        gap: 80px !important;
+        margin-right: auto !important;
+        flex: initial !important;
+    }
+  }
+
+  .vlh_megamenu .navmenu-meganav-standard__items{
+    padding-bottom: 50px !important;
+  }
+
+  .vlh_megamenu .navmenu-depth-3 {
+    margin-bottom: 15px !important;
+  }
+</style>
+
+<div
+  class="{{ meganav_classes | strip_newlines }}"
+  data-navmenu-submenu
+  data-meganav-menu
+  data-meganav-id="{{ block.id }}"
+>
+  <div class="vlh_megamenu navmenu-meganav-wrapper navmenu-meganav-standard__wrapper">
+    {%
+      render 'meganav-promo',
+      block: block,
+      position: 'first'
+    %}
+    <ul class="{{ navmenu_classes | strip_newlines }}">
+      {% for column in menu.links %} {% comment %} The first level of the menu is columns. {% endcomment %}
+        <div style="display: flex; flex-direction: column; gap:10px;">
+          {% for menu_item in column.links %}
+            {% unless menus_to_exclude contains menu_item.title %}
+              {%- capture navmenu_item_classes -%}
+                navmenu-item
+                navmenu-item-parent
+                navmenu-id-{{ menu_item.title | handle }}
+                navmenu-meganav-standard__item
+              {%- endcapture -%}
+
+              <li
+                class="{{ navmenu_item_classes | strip_newlines }}"
+                {% if menu_item.links.size > 0 %}data-navmenu-trigger{% endif %}
+                {% if linklists[menu_item.handle] != blank %}data-navmenu-parent{% endif %}
+                {{ block.shopify_attributes }}>
+                {% if menu_item.links.size > 0 %}
+                  <span {% comment %}href="{{ menu_item.url }}"{% endcomment %} class="navmenu-item-text navmenu-link-parent vlh-megamenu-title">
+                    {{ menu_item.title }}
+                  </span>
+                  {% else %}
+                  <a href="{{ menu_item.url }}"class="navmenu-item-text navmenu-link-parent vlh-megamenu-title">
+                    {{ menu_item.title }}
+                  </a>
+                {% endif %}
+
+                {% if menu_item.links.size > 0 %}
+                  {%
+                    render 'mobile-navmenu-button',
+                    button_label: menu_item.title,
+                  %}
+                {% endif %}
+
+                {% if linklists[menu_item.handle].links.size > 0 %}
+                  {%
+                    render 'navlist',
+                    menu_list: linklists[menu_item.handle].links,
+                    depth: 3,
+                    max_depth: 3,
+                    aria_expanded: true,
+                    is_mobile: false,
+                    menus_to_exclude: menus_to_exclude,
+                  %}
+                {% endif %}
+              </li>
+            {% endunless %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </ul>
+    {%
+      render 'meganav-promo',
+      block: block,
+      position: 'last'
+    %}
+  </div>
+</div>

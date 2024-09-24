@@ -1,0 +1,192 @@
+<script>
+        console.log("{{ section.id }}")
+         document.addEventListener("DOMContentLoaded", function (){
+        const div = document.querySelector("#{{ section.id }}-link");
+        const accordion = document.querySelector("#{{ section.id }}-accordion");
+        const headerHeight = document.querySelector(".page-masthead").scrollHeight;
+        let initialHeight = headerHeight;
+        document.querySelectorAll(".faq-element-container").forEach(function(e){initialHeight += e.scrollHeight})
+        const mql = window.matchMedia(
+        '(only screen and (hover: none) and (pointer: coarse)) or (max-width: 767px)'
+          );
+        if (mql.matches) {
+          accordion.style.marginTop = initialHeight +20+"px";
+          accordion.style.width = "100%";
+          div.style.width = "100%"
+        }
+
+     div.addEventListener("blur",function(e){
+         /*accordion.classList.add("hidden");
+         accordion.classList.remove("visible");*/
+
+        const visibleElements = document.querySelectorAll(".faq-element-container div:not([id='{{ section.id }}-link']) div.visible");
+          if(visibleElements.length == 0){
+           accordion.classList.add("visible");
+           accordion.classList.remove("hidden");
+          div.classList.add("focus");
+      }
+     });
+
+     div.addEventListener("focus",function(e){
+       const visibleElements = document.querySelectorAll(".faq-element-container div:not([id='{{ section.id }}-link']) div.visible");
+       visibleElements.forEach(function(e){e.classList.remove("visible");e.classList.add("hidden")});
+       const links = document.querySelectorAll(".faq-element-container div:not([id='{{ section.id }}-link'])");
+       links.forEach(function(e){e.classList.remove("focus")});
+       accordion.classList.remove("hidden");
+       accordion.classList.add("visible");
+       if (mql.matches) {
+          document.getElementById("faq-div").style.height = Math.max(initialHeight,initialHeight + accordion.scrollHeight)+"px";
+        }
+       else{
+          document.getElementById("faq-div").style.height = Math.max(initialHeight,headerHeight + accordion.scrollHeight)+"px";
+       }
+     });
+
+     const elements = document.querySelectorAll(".faq-element-container div:not([id='{{ section.id }}-link'])[tabindex]");
+      elements.forEach(function(e){
+        e.addEventListener("focusout",function(ev){
+          const visibleElements = document.querySelectorAll(".faq-element-container div:not([id='{{ section.id }}-link']) div.visible");
+          if(visibleElements.length == 0){
+           accordion.classList.add("visible");
+           accordion.classList.remove("hidden");
+          div.classList.add("focus");
+          }
+        });
+      });
+  
+  const observer = new ResizeObserver(function(e) {
+      if(accordion.scrollHeight)
+        if (mql.matches) {
+          accordion.style.marginTop = initialHeight +20+"px";
+          accordion.style.width = "100%";
+          div.style.width = "100%"
+          document.getElementById("faq-div").style.height = Math.max(initialHeight + accordion.scrollHeight)+"px";
+        }
+        else{
+          accordion.style.marginTop = "15rem";
+          accordion.style.width = "70%";
+          div.style.width = "30%";
+          document.getElementById("faq-div").style.height = Math.max(initialHeight,headerHeight + accordion.scrollHeight)+"px";
+        }
+  });
+  observer.observe(accordion);
+
+    {% if section.settings.is-default-element %}
+          div.focus({"focusVisible": false});
+          document.getElementById("faq-div").style.height = accordion.scrollHeight+"px";
+    {% endif %}
+           
+    {% if section.settings.islast %}
+      const anchor = "{{ page.handle }}"
+        if(anchor){
+            const faqCategory = document.querySelector(`[anchor=${anchor}]`);
+            if(faqCategory){
+              faqCategory.focus({"focusVisible": false});
+              document.getElementById("faq-div").style.height = faqCategory.scrollHeight+"px";
+              focused = true;
+            }   
+          }
+     {% endif %}
+      });
+
+</script>
+<div class="faq-element-container">
+  <div
+    id="{{ section.id }}-link"
+    tabindex="-1"
+    class="faq-element-link"
+    {% if section.settings.anchor %}
+      anchor="{{ section.settings.anchor }}"
+    {% endif %}
+  >
+    <span class="faq-element-title">{{ section.settings['element-title'] }}</span>
+    <div class="accordion hidden" id="{{ section.id }}-accordion" class="faq-element-content">
+      {% if section.settings['element-title'] != blank %}
+        <h2 class="mt-2 accordion-title mb-1 ms-3">{{ section.settings['element-title'] }}</h2>
+      {% endif %}
+      {% for accordion_item in section.blocks %}
+        {% if accordion_item.settings.title != blank %}
+          <div class="accordion-element">
+            {% comment %}
+            <input type="checkbox" id="{{ accordion_item.settings.title }}">
+            <label class="accordion-label" for="{{ accordion_item.settings.title }}">
+          {% endcomment %}
+            <input type="checkbox" id="{{ section.id }}-block-{{ forloop.index }}">
+            <label class="accordion-label" for="{{ section.id }}-block-{{ forloop.index }}">
+              <h3>
+                {{- accordion_item.settings.title -}}
+              </h3>
+            </label>
+            <div class="accordion-content">
+              {{ accordion_item.settings.content }}
+              {{ accordion_item.settings.html_content }}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<style>
+      .accordion-element input{
+    position: absolute;
+    opacity: 0;
+    z-index: -1;
+  }
+</style>
+{% schema %}
+{
+  "name": "t:sections.faq-element.label",
+    "presets": [
+    {
+      "name": "t:sections.faq-element.presets.name",
+      "category": "t:sections.faq-element.presets.category"
+    }
+  ],
+  "settings":[
+    {
+      "type": "text",
+      "label": "t:sections.faq-element.title",
+      "id": "element-title"
+    },
+    {
+      "type": "checkbox",
+      "label":"t:sections.faq-element.default.title",
+      "id": "is-default-element"
+    },
+    {
+      "id": "anchor",
+      "type": "text",
+      "label": "t:sections.faq-element.anchor.label"
+    },
+    {
+      "id": "islast",
+      "type": "checkbox",
+      "label": "t:sections.faq-element.is_last.label"
+    }
+  ],
+  "blocks":[
+    {
+      "type": "accordion-element",
+      "name": "element",
+      "settings": [
+        {
+          "id": "title",
+          "type": "text",
+          "label": "t:sections.accordion.accordion_element.title.label"
+        },
+        {
+          "id": "content",
+          "type": "richtext",
+          "label": "t:sections.accordion.accordion_element.content.label"
+        },
+        {
+          "id": "html_content",
+          "type": "html",
+          "label": "t:sections.accordion.accordion_element.html_content.label"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

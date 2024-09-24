@@ -1,0 +1,34 @@
+
+  {% assign displayed = false %}
+  {% if collection and collection.metafields.custom.seo_tags_content %}
+  {% for seo_content in collection.metafields.custom.seo_tags_content.value %}
+    {% for current_tag in current_tags %}
+      {% assign joined_tags = seo_content.tags | t | join: "," %}
+      {% if joined_tags contains current_tag %}
+        <script type="application/ld+json">{{ seo_content.contenu_seo_json.value | json }}</script>
+        {% assign displayed = true %}
+      {% endif %}
+    {% endfor %}
+    {% else %}
+  {% endfor %}
+  {% endif %}
+  {% unless displayed %}
+    {% if collection.metafields.custom.texte_seo_json %}
+      <script type="application/ld+json">{{ collection.metafields.custom.texte_seo_json.value | json }}</script>
+    {% endif %}
+  {% endunless %}
+
+{% schema %}
+{
+  "name": "Collection SEO JSON",
+    "presets": [
+    {
+      "name": "Collection SEO JSON",
+      "category": "t:sections.collection_seo_content.presets.category"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["collection"]
+  }
+}
+{% endschema %}

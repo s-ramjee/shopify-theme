@@ -1,0 +1,244 @@
+{% if product.type == "Card" %}
+<style>
+  .custom-modal{
+    display: flex;
+    flex-direction: column;
+    align-items:center;
+    z-index:9999999999;
+    overflow:auto
+  }
+  @media screen and (min-width:860px){
+  .custom-modal{
+    padding: 2rem;
+  }
+  }
+  @media screen and (max-width: 859px){
+    .custom-modal{
+      padding: 1rem 2rem;
+      width:90%;
+      height:90%
+    }
+  }
+  .sample-button{
+    background-color: white;
+    color: black;
+    border: 1px solid black;
+    margin-left:auto;
+    margin-right: auto;
+    padding: 1rem 1.25rem
+  }
+  @media only screen and (min-width: 720px){
+    #email-div,#sample-btn{
+      width: 70%
+    }
+  }
+  .error-message{
+    margin-left: 1rem;
+    color: red;
+  }
+  #sample-phase-1,#sample-phase-2{
+    display: flex;
+    flex-direction: column;
+    align-items:center;
+  }
+  #sample-btn{
+    cursor: pointer;
+  }
+  .loader {
+    border: 5px solid #f3f3f3;
+    border-top: 4px solid #000;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin .5s linear infinite;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .modal-dismiss{
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    cursor:pointer
+  }
+  .modal-dismiss > svg {
+    height: 30px;
+    width: 30px
+  }
+</style>
+<button id="sample-btn-{{ section.id }}" class="product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded mb-4" type="button" style="border-radius:50px">
+    <span class="atc-button--text">
+      {{ 'product.buttons.sample' | t }}
+    </span>
+</button>
+
+<div class="custom-modal-overlay" id="overlay-{{ section.id }}"></div>
+<div class="custom-modal" id="modal-{{ section.id }}">
+  <span id="modal-dismiss" class="modal-dismiss">{%- render 'icon-library', id:'cross' -%}</span>
+  {% if title %}
+    <h2><b>{{ title }}</b></h2>
+  {% endif %}
+  <div id="sample-phase-1">
+    {% if body %}
+      {{ body }}
+    {% endif %}
+  
+      <div id="email-div">
+        <div class="form-field my-2">
+          <input
+            class="form-field-input form-field-text"
+            id="sampleEmail"
+            name="sampleEmail"
+            type="email"
+            autocorrect="off"
+            autocapitalize="off"
+            onchange="handleEmailChange(event)"
+          >
+          <label
+            class="form-field-title"
+            for="sampleEmail"
+          >
+            {{ 'customers.forms.email' | t }}
+          </label>
+        </div>
+        <small class="error-message" style="display: none" id="email-error">{{ "customers.forms.error_messages.invalid_email" | t }}</small>
+      </div>
+      
+      <div class="form-field mx-0 my-3" id="agree-div">
+      <input
+        type="checkbox"
+        class="planet-cards-check"
+        id="marketing_email_consent"
+        onchange="handleCheck(event)"
+      >
+  
+      <label
+        class="checkbox-label planet-cards-check"
+        for="marketing_email_consent"
+      >
+        {{ 'customers.forms.marketing_email_consent' | t }}
+      </label>
+    </div>
+      {% if button_label %}
+        <button type="button" onclick="handleSampleSubmit()" class="sample-button my-2" id="sample-btn">{{ button_label }}</button>
+      {% endif %}
+    {% if small_text %}
+      <small>{{ small_text }}</small>
+    {% endif %}
+  </div>
+  <div id="sample-phase-2" style="display:none">
+    {{ code }}
+    {{ instructions}}
+    {% if small_text %}
+      <small>{{ small_text }}</small>
+    {% endif %}
+      <button
+    id="sample_customize_button"
+    class="button-primary product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded my-2"
+    type="button"
+  >
+    <span class="atc-button--text">
+      {{ 'product.buttons.customize' | t }}
+    </span>
+  </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", ()=> {
+    document.getElementById('sample-btn-{{ section.id }}').addEventListener('click', function() {
+      const mainButton = document.getElementById("customize-button");
+      if(mainButton) {
+        mainButton.click()
+      }
+
+      // document.getElementById('overlay-{{ section.id }}').classList.add('is-visible');
+      // document.getElementById('modal-{{ section.id }}').classList.add('is-visible');
+    });
+    
+    document.getElementById('overlay-{{ section.id }}').addEventListener('click', function() {
+      document.getElementById('overlay-{{ section.id }}').classList.remove('is-visible');
+      document.getElementById('modal-{{ section.id }}').classList.remove('is-visible');
+    });
+
+    document.getElementById("modal-dismiss").addEventListener('click', ()=>{
+      document.getElementById('overlay-{{ section.id }}').classList.remove('is-visible');
+      document.getElementById('modal-{{ section.id }}').classList.remove('is-visible');
+    });
+
+    {% if product %}
+
+  const customizeButton = document.getElementById("sample_customize_button");
+  customizeButton.addEventListener("click",()=>{
+    const mainButton = document.getElementById("customize-button");
+    if(mainButton)
+      mainButton.click()
+  })
+      {% endif %}
+  })
+  function handleCheck(e){
+    if(e.target.value){
+      document.querySelector("#agree-div label").style.color = "black"
+    }
+  }
+  function handleEmailChange(e){
+    if(e.target.value)
+      e.target.setAttribute("value",e.target.value)
+    else
+      e.target.removeAttribute("value")
+  }
+  async function handleSampleSubmit(){
+    const agreeDiv = document.getElementById("agree-div");
+    const agree = document.getElementById("marketing_email_consent").checked;
+    const email = document.getElementById("sampleEmail");
+    const emailError = document.getElementById("email-error");
+    const button = document.getElementById("sample-btn")
+    button.innerHTML = "<div class='loader'></div>";
+    button.style.cursor = "not-allowed";
+
+    button.setAttribute("disabled", true);
+    
+    email.setAttribute("value",email.value)
+
+    agreeDiv.style.color = "";
+    emailError.style.display = "none";
+    let valid = true
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    if(!re.test(email.value)){
+      emailError.style.display = "";
+      valid = false
+    }
+    if(!agree){
+      agreeDiv.style.color="red";
+      valid = false
+    }
+    if(valid){
+      const response = await fetch(OUTIL_PERSO_API+"users/requestSample", {
+              method: 'POST',
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ "email": email.value
+        })
+      });
+      if(response.ok){
+        const divPhase1 = document.getElementById("sample-phase-1");
+        const divPhase2 = document.getElementById("sample-phase-2");
+
+        divPhase1.style.display = "none";
+        divPhase2.style.display = "";
+        
+        return
+      }
+    }
+    button.removeAttribute("disabled");
+    button.innerHTML = "{{ button_label }}";
+    button.style.cursor = "not-allowed";
+  }
+
+</script>
+{% endif %}

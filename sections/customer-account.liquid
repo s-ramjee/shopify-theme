@@ -1,0 +1,112 @@
+<div class="d-flex">
+  <nav class="customer-account-navigation">
+    <ol>
+      {%- for block in section.blocks -%}
+        {%- if block.settings.block_title != blank -%}
+          <li
+            onclick="changeDisplayedTab('{{ block.id }}')"
+            id="link-{{ block.id }}"
+            class="navigation-item {% if forloop.first %} active {% endif %}"
+          >
+            {%- if block.settings.block_icon != blank -%}
+              <img
+                src="{{ block.settings.block_icon.src | img_url }}"
+                alt="{{ block.settings.block_icon.alt }}"
+              >
+            {% endif -%}
+            {{- block.settings.block_title }}
+          </li>
+        {% endif %}
+      {%- endfor -%}
+    </ol>
+  </nav>
+  <div class="blocks-container">
+    {%- for block in section.blocks -%}
+      <div id="block-{{ block.id }}" class="customer-account-block {% unless forloop.first %} hidden {% endunless %}">
+        {%- case block.type -%}
+          {%- when 'customer_profile' -%}
+            {%- render 'customer-profile' -%}
+          {%- when 'customer_addresses' -%}
+            {%- render 'customer-addresses' -%}
+          {%- when 'wishlist' -%}
+            {%- render 'wishlist-snippet' -%}
+        {%- endcase -%}
+      </div>
+    {%- endfor -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "t:sections.customer_account.name",
+    "blocks":[
+      {
+        "type": "customer_profile",
+        "name": "t:sections.customer_account.blocks.customer_profile.name",
+        "limit": 1,
+        "settings":[
+          {
+            "type": "text",
+            "id": "block_title",
+            "label": "t:sections.customer_account.blocks.block_title.label"
+          },
+          {
+            "type": "image_picker",
+            "id": "block_icon",
+            "label": "t:sections.customer_account.blocks.block_icon.label"
+          }
+        ]
+      },
+      {
+        "type": "customer_addresses",
+        "name": "t:sections.customer_account.blocks.customer_addresses.name",
+        "limit": 1,
+        "settings":[
+          {
+            "type": "text",
+            "id": "block_title",
+            "label": "t:sections.customer_account.blocks.block_title.label"
+          },
+          {
+            "type": "image_picker",
+            "id": "block_icon",
+            "label": "t:sections.customer_account.blocks.block_icon.label"
+          }
+        ]
+      },
+      {
+        "type": "wishlist",
+        "name": "t:sections.customer_account.blocks.customer_wishlist.name",
+        "limit": 1,
+        "settings":[
+          {
+            "type": "text",
+            "id": "block_title",
+            "label": "t:sections.customer_account.blocks.block_title.label"
+          },
+          {
+            "type": "image_picker",
+            "id": "block_icon",
+            "label": "t:sections.customer_account.blocks.block_icon.label"
+          }
+        ]
+      },
+      {
+        "type": "customer_logout",
+        "name": "t:sections.customer_account.blocks.customer_logout.name",
+        "limit": 1,
+        "settings":[
+          {
+            "type": "text",
+            "id": "block_title",
+            "label": "t:sections.customer_account.blocks.block_title.label"
+          },
+          {
+            "type": "image_picker",
+            "id": "block_icon",
+            "label": "t:sections.customer_account.blocks.block_icon.label"
+          }
+        ]
+      }
+    ]
+}
+{% endschema %}

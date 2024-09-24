@@ -1,0 +1,24 @@
+{% comment %}
+  Section à ajouter dans la fiche produit pour pouvoir avoir les autres widgets produits
+{% endcomment %}
+{% schema %}
+  {
+    "name": "Avis - script produit",
+    "settings": [],
+    "presets": [
+      {
+        "name": "Avis - script produit"
+      }
+    ]
+  }
+{% endschema %}
+
+{% assign locale = request.locale.iso_code  %}
+{% case locale %} 
+  {% when "it" %}
+<script async charset="utf-8" src="https://widgets.rr.skeepers.io/product/c52cb6e8-561a-e4f4-9929-b40ee5268824/66ad950e-b249-4b88-97e4-19219687daef.js"></script>
+  {% when "de" %}
+    <script async charset="utf-8" src="https://widgets.rr.skeepers.io/product/a5913fc5-4e78-3e34-ede7-2e4cd18f6f19/3ecb3229-7df2-4f35-8f8c-8d533489586d.js"></script>
+  {% else %}
+    <script async charset="utf-8" src="https://widgets.rr.skeepers.io/product/335fee34-8fcd-3f84-b50b-dc57d8a25461/e9981eeb-b332-46e7-9201-921640940567.js"></script>
+{% endcase %}

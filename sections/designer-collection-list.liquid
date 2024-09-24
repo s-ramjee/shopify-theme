@@ -1,0 +1,112 @@
+<script
+  type="application/json"
+  data-section-id="{{ section.id }}"
+  data-section-type="designer-collection-list-section"
+></script>
+
+{% style %}
+  #shopify-section-{{ section.id }} .collection-list__content {
+    grid-template-columns: repeat({{ section.settings.thumbnail_columns_desktop }}, minmax(auto, 1fr));
+  }
+
+  .collection-list__content img {
+    aspect-ratio: 4 / 3;
+    width: 100%; /* Ensure images take the full width of their container */
+    height: auto; /* Let the height adjust automatically to maintain the aspect ratio */
+  }
+
+  @media only screen and (max-width: 860px) {
+    #shopify-section-{{ section.id }} .collection-list__content {
+      grid-template-columns: repeat({{ section.settings.thumbnail_columns_mobile }}, minmax(auto, 1fr));
+    }
+  }
+{% endstyle %}
+<section class="collection-list__container">
+  {% if section.settings.title != blank %}
+    <h2 class="home-section--title">
+      {{ section.settings.title | escape }}
+    </h2>
+  {% endif %}
+
+  <ul
+    class="
+      home-section--content
+      collection-list__content
+      collection--image-crop-{{ section.settings.image-crop }}
+      {% if section.settings.cta_label == blank %}no-cta{% endif %}
+    "
+    data-layout="grid"
+  >
+
+      {% for collection in collections %}
+        {% if collection.metafields.custom.designer %}
+          {% render 'collection-list-item',
+            collection: collection,
+            collection_image: featured_image,
+            collection_image_alt: featured_image_alt
+          %}
+        {% endif %}
+      {% endfor %}
+  </ul>
+</section>
+
+{% schema %}
+{
+  "name": "Designer Collection List",
+  "class": "collection-list__container",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "t:sections.collection_list.title.label"
+    },
+    {
+      "type": "range",
+      "id": "thumbnail_columns_desktop",
+      "label": "t:sections.collection_list.thumbnail_columns_desktop.label",
+      "min": 3,
+      "max": 6,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "thumbnail_columns_mobile",
+      "label": "t:sections.collection_list.thumbnail_columns_mobile.label",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "select",
+      "id": "image-crop",
+      "label": "t:sections.collection_list.image-crop.label",
+      "info": "t:sections.collection_list.image-crop.info",
+      "options": [
+        {
+          "value": "original",
+          "label": "t:sections.collection_list.image-crop.option_1"
+        },
+        {
+          "value": "circle",
+          "label": "t:sections.collection_list.image-crop.option_2"
+        },
+        {
+          "value": "round",
+          "label": "t:sections.collection_list.image-crop.option_3"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Designer Collection List",
+      "category": "t:sections.collection_list.presets.collection_list.category"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["*"]
+  }
+}
+{% endschema %}

@@ -1,0 +1,90 @@
+<ul class="site-header-actions" data-header-actions>
+  {% if shop.customer_accounts_enabled %}
+    {% unless customer %}
+      <li class="site-header-actions__wishlist-link mb-none">
+        <a
+          class="site-header_account-link-anchor"
+          href="{{ pages.favoris.url }}"
+        >
+          <span class="site-header__account-icon">
+            {% render 'icon-library', id: 'icon-heart-outline' %}
+          </span>
+        </a>
+      </li>
+      <li class="site-header-actions__account-link mb-none">
+        <a
+          class="site-header_account-link-anchor"
+          href="{{ routes.account_login_url }}"
+        >
+          <span class="site-header__account-icon">
+            {%
+              render 'icon-library',
+              id: 'icon-account',
+            %}
+          </span>
+          {% comment %}
+            <span class="site-header_account-link-text">
+              {{ 'header.account.login' | t }}
+            </span>
+          {% endcomment %}
+        </a>
+      </li>
+    {% else %}
+      <li class="site-header-actions__wishlist-link mb-none">
+        <a
+          class="site-header_account-link-anchor"
+          href="{{ routes.account_url}}?view=wishlist"
+        >
+          <span class="site-header__account-icon">
+            {% render 'icon-library', id: 'icon-heart-outline' %}
+          </span>
+        </a>
+      </li>
+      <li class="site-header-actions__account-link mb-none">
+        <a
+          href="{{ routes.account_url }}"
+        >
+          <span class="site-header__account-icon">
+            {% render 'icon-library', id: 'icon-account' %}
+          </span>
+        </a>
+
+        {% comment %}
+          <span class="site-header__account-links">
+            <a
+              class="site-header__account-link--account"
+              href="{{ routes.account_url }}"
+            >
+              {{ 'header.account.title' | t }}
+            </a>
+
+            <a
+              class="site-header__account-link--logout"
+              href="{{ routes.account_logout_url }}"
+              data-no-instant
+            >
+              {{ 'header.account.logout' | t }}
+            </a>
+          </span>
+        {% endcomment %}
+      </li>
+    {% endunless %}
+  {% endif %}
+  <div class="site-header-cart mb-none">
+    <a class="site-header-cart--button" href="{{ routes.cart_url }}">
+      <span
+        class="site-header-cart--count {% if cart.item_count > 0 %}visible{% endif %}"
+        data-header-cart-count="{% if cart.item_count > 0 %}{{ cart.item_count }}{% endif %}"
+      >
+      </span>
+      <span class="site-header-cart-icon site-header-cart-icon--svg">
+        {% if section.settings.cart_icon == 'icon-bag' %}
+          {% render 'icon-library', id: 'icon-bag' %}
+        {% else %}
+          {% render 'icon-library', id: 'icon-cart' %}
+        {% endif %}
+      </span>
+      <span class="visually-hidden">{{ 'general.accessibility.cart' | t }}</span>
+    </a>
+  </div>
+</ul>

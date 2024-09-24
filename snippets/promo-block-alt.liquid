@@ -1,0 +1,103 @@
+{% assign additional_classes = additional_classes | default: blank %}
+{% assign has_link = false %}
+{% if block.settings.block_link != blank %}
+  {% assign has_link = true %}
+{% endif %}
+
+{%- capture classes -%}
+  promo-block-alt
+  {% if block.settings.image != blank %}promo-block-alt--image{% else %}promo-block-alt--placeholder{% endif %}
+  promo-block-alt--{{ section.id }}--{{ block.id }}
+  promo-block-alt--index-{{ index }}
+  {% if maintain_aspect_ratio %}promo-mosaic--maintain-aspect-ratio{% endif %}
+  {{ additional_classes | strip_newlines }}
+{%- endcapture -%}
+
+<style>
+  .promo-block-alt--content-wrapper h2 {
+    color: var(--gray-900, #101828);
+    font-style: italic;
+  }
+  .promo-block-alt--content-wrapper p {
+    color: var(--gray-900, #101828);
+    line-height: 24px;
+  }
+
+  .promo-block-alt img {
+    max-height: 80vh;
+    width: 100%;
+  }
+  
+  .promo-block-alt a {
+    text-decoration: none;
+  }
+</style>
+
+
+<{% if block.settings.title != blank and block.settings.text != blank %}article{% else %}div{% endif %}
+  class="{{ classes | replace: '  ', ' ' | strip_newlines }} {% if block.settings.image == blank %}onboarding-image{% endif %}"
+  {{ block.shopify_attributes }}
+>
+  {% if all_clickable and has_link %}
+    <a href="{% if collection and block.settings.block_link contains "products" %}{{ block.settings.block_link }}{% else %}{{ block.settings.block_link }} {% endif %}">
+  {% endif %}
+  {% if block.settings.image %}
+    <div class="promo-block-alt--img-wrapper">
+    {%
+      render 'rimg'
+      img: block.settings.image,
+      lazy: true,
+      size: '1350x1350',
+      focal_point: block.settings.image.presentation.focal_point,
+    %}
+    </div>
+  {% endif %}
+  {% if all_clickable and has_link %}
+    </a>
+  {% endif %}
+  {%- capture wrapper_classes -%}
+    promo-block-alt--content
+    promo-block-alt--content-align-{{ text_alignment }}
+    {% unless maintain_aspect_ratio %}promo-grid--maintain-aspect-ratio{% endunless %}
+    {% unless compress_blocks %}promo-block-alt--expanded{% endunless %}
+    {% unless has_link %}promo-block-alt--unlinked{% endunless %}
+  {%- endcapture -%}
+
+  {% if has_link %}
+    <a
+      class="{{ wrapper_classes | replace: '  ', ' ' | strip_newlines }}"
+      href="{% if collection and block.settings.block_link contains "products" %}{{ block.settings.block_link }}{% else %}{{ block.settings.block_link }} {% endif %}"
+      data-promo-block-content
+    >
+  {% else %}
+    <div
+      class="{{ wrapper_classes | replace: '  ', ' ' | strip_newlines }}"
+      data-promo-block-content
+    >
+  {% endif %}
+
+  <div class="promo-block-alt--content-wrapper" style="text-align:{{ text_alignment }}">
+    {% if block.settings.title != blank %}
+      <{{ block.settings.title_heading }} class="promo-block-alt--header">
+        {{ block.settings.title | escape }}
+      </{{ block.settings.title_heading }}>
+    {% endif %}
+
+    {% if block.settings.text != blank %}
+        {{ block.settings.text }}
+    {% endif %}
+
+    {% if block.settings.button_text != blank and block.settings.block_link != blank %}
+      <span
+        class="button-{{ block.settings.button_style }} promo-block-alt--button">
+        {{ block.settings.button_text | escape }}
+      </span>
+    {% endif %}
+  </div>
+
+  {% if has_link %}
+    </a>
+  {% else %}
+    </div>
+  {% endif %}
+</{% if block.settings.title != blank and block.settings.text != blank %}article{% else %}div{% endif %}>

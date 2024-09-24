@@ -1,0 +1,142 @@
+{% if section.settings.cropping_enabled %}
+<script>
+  document.addEventListener("DOMContentLoaded",()=>{
+    const container = document.getElementById('{{section.id}}-content');
+    const btn = document.getElementById('{{section.id}}-showMoreBtn');
+    if(container.clientHeight >= container.scrollHeight){
+      btn.style.display = 'none'
+    }
+    else{
+      container.classList.add("cropped")
+      btn.addEventListener('click',()=>{
+        toggleContent();
+      })
+    }
+    function toggleContent() {
+    
+
+    if (container.style.maxHeight) {
+        container.style.maxHeight = null;
+        container.classList.add("cropped")
+        btn.innerHTML = '{{'sections.rich-text.show_more' | t}}';
+    } else {
+        container.style.maxHeight = container.scrollHeight + 'px';
+        container.classList.remove("cropped")
+        btn.innerHTML = '{{'sections.rich-text.show_less' | t}}';
+    }
+}
+  })
+</script>
+  {% endif %}
+<style>
+{% if section.settings.cropping_enabled %}  
+
+  #{{ section.id }}-content{
+  max-height:{{section.settings.max_height}}px;
+  position:relative;
+  overflow: hidden;
+  transition: all .25s;
+}
+
+#{{section.id}}-content.cropped:before {
+  content:'';
+  width:100%;
+  height:100%;    
+  position:absolute;
+  left:0;
+  top:0;
+  background:linear-gradient(transparent 150px, white);
+}
+  #{{ section.id }}-showMoreBtn{
+    width: 100%;
+    background: transparent;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+{% endif %}
+
+</style>
+<section
+  class="
+    rich-text--container
+    rich-text-{{ section.settings.width }}
+  "
+>
+  {% assign displayed = false %}
+  <div id="{{ section.id }}-content">
+    {% if collection and collection.metafields.custom.seo_tags_content %}
+    {% for seo_content in collection.metafields.custom.seo_tags_content.value %}
+      {% for current_tag in current_tags %}
+        {% assign joined_tags = seo_content.tags | t | join: "," %}
+        {% if joined_tags contains current_tag %}
+          {{ seo_content.contenu_seo | metafield_tag }}
+          {% assign displayed = true %}
+        {% endif %}
+      {% endfor %}
+      {% else %}
+    {% endfor %}
+    {% endif %}
+    {% unless displayed %}
+      {% if collection.metafields.custom.texte_seo %}
+      {{ collection.metafields.custom.texte_seo | metafield_tag }}
+        {% assign displayed = true %}
+        {% endif %}
+      {% if collection.metafields.custom.texte_seo_json %}
+        <script type="application/ld+json">{{ collection.metafields.custom.texte_seo_json.value | json }}</script>
+      {% endif %}
+    {% endunless %}
+  </div>
+  {% if displayed and section.settings.cropping_enabled %}
+    <button id="{{ section.id }}-showMoreBtn" class="show-more-btn">{{'sections.rich-text.show_more' | t}}</button>
+  {% endif %}
+</section>
+
+{% schema %}
+{
+  "name": "Collection SEO content",
+    "presets": [
+    {
+      "name": "t:sections.collection_seo_content.presets.title",
+      "category": "t:sections.collection_seo_content.presets.category"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["collection"]
+  },
+  "settings":[
+    {
+      "id": "width",
+      "type": "select",
+      "label": "t:sections.rich_text.width.label",
+      "options": [
+        {
+          "value": "regular",
+          "label": "t:sections.rich_text.width.option_1"
+        },
+        {
+          "value": "wide",
+          "label": "t:sections.rich_text.width.option_2"
+        },
+        {
+          "value": "full-width",
+          "label": "t:sections.rich_text.width.option_3"
+        }
+      ],
+      "default": "regular"
+    },
+    {
+      "id": "cropping_enabled",
+      "type": "checkbox",
+      "default": false,
+      "label": "Activer le cropping"
+    },
+    {
+      "id": "max_height",
+      "type": "number",
+      "default": 200,
+      "label": "Hauteur à afficher avant crop en px"
+    }
+  ]
+}
+{% endschema %}

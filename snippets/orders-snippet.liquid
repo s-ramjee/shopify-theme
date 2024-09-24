@@ -1,0 +1,147 @@
+{% assign option_serenite_variant = all_products['option-serenite'].variants[0] %}
+<h2 class="account-header mb-3">{{ 'customers.account.orders.header' | t }}</h2>
+{% if customer.orders.size > 0 %}
+  {% paginate customer.orders by 10 %}
+    <div class="table-container">
+    <table class="" cellspacing="0" cellpadding="0">
+      <thead>
+        <tr>
+          {% comment %}
+          <th>{{ 'customers.account.orders.products' | t }}</th>
+          {% endcomment %}
+          <th>{{ 'customers.account.orders.order_number' | t }}</th>
+          <th>{{ 'customers.account.orders.order_date' | t }}</th>
+          <th>{{ 'customers.account.orders.statut' | t }}</th>
+          <th>{{ 'customers.account.orders.total' | t }}</th>
+          <th>{{ 'customers.order.facture' | t }}</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for order in customer.orders %}
+          {% assign displayed_products_number = 0 %}
+          {% assign counter = 0 %}
+          <tr>
+            {% comment %}
+            <td>
+              <div>
+                {% for item in order.line_items %}
+                {% endfor %}
+                {% assign additional_elements = counter | minus: 2 %}
+                {% if additional_elements > 0 %}
+                  <span>{{ additional_elements }}</span>
+                {% endif %}
+              </div>
+            </td>
+          {% endcomment %}
+            <td class="account-order-number">
+               <a href="{{ order.customer_url }}" class="view-order">{{ order.order_number }}</a>
+            </td>
+            <td>
+              {{ order.created_at | date: '%e %b. %Y' }}
+            </td>
+            <td class="fulfillment-status fulfillment-status--{% if order.cancelled %}cancelled" {% else %}{{ order.fulfillment_status }}"{% endif %}>
+              <a href="{{order.order_status_url}}" target="_blank" style="text-decoration: none;">
+                <span>
+                  {% if order.cancelled %} 
+                    {{ "customers.order.cancelled_order" | t }} 
+                  {% else %}
+                    {{ order.fulfillment_status_label }}
+                  {% endif %}
+                </span>
+              </a>
+            </td>
+            <td class="account-order-list-total">
+              <span class="money">{{ order.total_price | money_without_currency }} €</span>
+            </td>
+            <td>
+              {% if order.financial_status contains "paid" or order.financial_status contains "partially_refunded" or order.financial_status contains "refunded" %}<a class="download-invoice" target='_blank' href='https://www.orderprinterpro.com/download/orders/34fdf6451841d59caf4b/{{ order.id | times: 3539 }}/{{ order.name | handleize }}.pdf'>{% render 'icon-library', id:'download-icon' %}</a>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+      </div>
+    {% render 'pagination', paginate: paginate %}
+  {% endpaginate %}
+{% else %}
+  <p class="empty">{{ 'customers.account.empty' | t }}</p>
+{% endif %}
+
+<style>
+  table{
+    width: 100%;
+    border: 1px solid #eaecf0;
+    border-radius: 15px;
+    min-width:500px
+  }
+  thead th{
+    font-weight: 700;
+    font-size: 16px;
+    font-family: "DM Sans";
+    color: #475467
+  }
+  tbody td div{
+    display: flex;
+    justify-content: space-evenly;
+  }
+  tbody td{
+    text-align: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  tbody td .remaining_products{
+    align-self:center;
+    background-color: #EAECF0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    color: #344054;
+  }
+  thead{
+    line-height: 3;
+  }
+  thead th{
+    background-color: #EAECF0;
+  }
+  thead th:first-child{
+    border-radius: 15px 0 0 0;
+  }
+
+  thead th:last-child{
+    border-radius: 0 15px 0 0;
+  }
+  tbody tr:not(:last-child) td{
+   border-bottom: 1px solid #eaecf0
+  }
+  td a.view-order{
+    color: var(--primary-color);
+  }
+  td a.download-invoice svg{
+    width: 1.5rem;
+  }  
+  .fulfillment-status span{
+    border: 1px solid;
+    border-radius: 25px;
+    padding: 0 0.5rem;
+    white-space:nowrap;
+  }
+  .fulfillment-status--complete span{
+    color: #067647;
+    background-color: #ECFDF3;
+    border-color: #ABEFC6 ;
+  }
+  .fulfillment-status--unfulfilled span,.fulfillment-status--fulfilled span,.fulfillment-status--partial span{
+    color: #363F72;
+    background-color:#F8F9FC;
+    border-color: #D5D9EB;
+  }
+
+  .fulfillment-status--cancelled span{
+    color: #B42318;
+    background-color: #FEF3F2;
+    border-color: #FECDCA;
+  }
+  th:last-child{
+    border-right: 10px
+  }
+</style>

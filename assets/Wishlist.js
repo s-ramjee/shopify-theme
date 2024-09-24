@@ -1,0 +1,271 @@
+const LOCAL_STORAGE_WISHLIST_KEY = 'shopify-wishlist';
+const LOCAL_STORAGE_DELIMITER = ',';
+const BUTTON_ACTIVE_CLASS = 'active';
+const GRID_LOADED_CLASS = 'loaded';
+
+const selectors = {
+  button: '[button-wishlist]',
+  grid: '[grid-wishlist] ul',
+  productCard: '.productitem',
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  initButtons();
+  initGrid();
+});
+
+document.addEventListener('shopify-wishlist:updated', (event) => {
+  console.log('[Shopify Wishlist] Wishlist Updated ✅', event.detail.wishlist);
+  initGrid();
+});
+
+document.addEventListener('shopify-wishlist:init-product-grid', (event) => {
+  console.log('[Shopify Wishlist] Wishlist Product List Loaded ✅', event.detail.wishlist);
+});
+
+document.addEventListener('shopify-wishlist:init-buttons', (event) => {
+  console.log('[Shopify Wishlist] Wishlist Buttons Loaded ✅', event.detail.wishlist);
+});
+
+const fetchProductCardHTML = (handle) => {
+  const productTileTemplateUrl = `/products/${handle}?view=card`;
+  return fetch(productTileTemplateUrl)
+  .then((res) => res.text())
+  .then((res) => {
+    const text = res;
+    const parser = new DOMParser();
+    const htmlDocument = parser.parseFromString(text, 'text/html');
+    const productCard = htmlDocument.documentElement.querySelector(selectors.productCard);
+    return productCard.outerHTML;
+  })
+  .catch((err) => console.error(`[Shopify Wishlist] Failed to load content for handle: ${handle}`, err));
+};
+
+const setupGrid = async (grid) => {
+  const wishlist = getWishlist();
+  grid.replaceChildren([]);
+  await wishlist.forEach(async(element) => {
+    const elementSplit = element.split(";");
+    const handle = elementSplit[0];
+    const title = elementSplit[1]
+    const locale = elementSplit[2]
+    const product =  (await fetch(`/products/${handle}.js`).then(response => response.json()));
+    const productItemHtml = getProductItemHtml(product, "",title);
+    const productItem = htmlToElement(productItemHtml);
+    if(productItem)
+    {
+      const wishlistButton = productItem.querySelector("[button-wishlist]");
+      if(wishlistButton)
+        setupButton(wishlistButton);
+      grid.appendChild(productItem);
+    }
+  });
+
+  const event = new CustomEvent('shopify-wishlist:init-product-grid', {
+    detail: { wishlist: wishlist }
+  });
+  document.dispatchEvent(event);
+};
+
+const setupButtons = (buttons) => {
+  buttons.forEach((button) => {
+    setupButton(button);
+  });
+};
+
+const initGrid = () => {
+  const grid = document.querySelector(selectors.grid) || false;
+  if (grid) setupGrid(grid);
+};
+
+const initButtons = () => {
+  const buttons = document.querySelectorAll(selectors.button) || [];
+  if (buttons.length) setupButtons(buttons);
+  else return;
+  const event = new CustomEvent('shopify-wishlist:init-buttons', {
+    detail: { wishlist: getWishlist() }
+  });
+  document.dispatchEvent(event);
+};
+
+const setupButton = (button) => {
+    const productHandle = button.getAttribute("data-product-wishlist-handle") || false;
+    const productTitle = button.getAttribute("data-product-wishlist-title") || false;
+    if (!productHandle) return console.error('[Shopify Wishlist] Missing `data-product-wishlist-handle` attribute. Failed to update the wishlist.');
+    if (wishlistContains(productHandle)) button.classList.add(BUTTON_ACTIVE_CLASS);
+    else button.classList.remove(BUTTON_ACTIVE_CLASS)
+    $(button).off('click');
+    $(button).on('click', (event) => {
+      event.stopPropagation();
+      updateWishlist(productHandle,productTitle);
+      button.classList.toggle(BUTTON_ACTIVE_CLASS);
+      initButtons();
+    });
+}
+
+const getWishlist = () => {
+  if (isCustomerLoggedIn){
+    return customerWishlist;
+  }
+  else {
+    const wishlist = localStorage.getItem(LOCAL_STORAGE_WISHLIST_KEY) || false;
+    if (wishlist) return wishlist.split(LOCAL_STORAGE_DELIMITER);
+    return [];
+  }
+};
+
+const setWishlist = (array) => {
+  const wishlist = array.join(LOCAL_STORAGE_DELIMITER);
+  if(isCustomerLoggedIn){
+    const access_token = localStorage.getItem("outil_access_token");
+    console.log(access_token);
+    if(access_token)
+    {
+      if (array.length === 0) {
+        fetch(OUTIL_PERSO_API + 'users/clearMetafield',{
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+          },
+          body:JSON.stringify({
+            "namespace": "custom",
+            "key": "wishlist"
+          })
+        })
+      }
+      else {
+        fetch(OUTIL_PERSO_API + 'users/updateMetafield',{
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+          },
+          body:JSON.stringify({
+            "namespace": "custom",
+            "key": "wishlist",
+            "value": wishlist
+          })
+          }
+        )
+      }
+    const event = new CustomEvent('shopify-wishlist:updated', {
+      detail: { wishlist: array }
+    });
+    document.dispatchEvent(event);
+    }
+
+  }
+  else{
+    if (array.length) localStorage.setItem(LOCAL_STORAGE_WISHLIST_KEY, wishlist);
+    else localStorage.removeItem(LOCAL_STORAGE_WISHLIST_KEY);
+  
+    const event = new CustomEvent('shopify-wishlist:updated', {
+      detail: { wishlist: array }
+    });
+    document.dispatchEvent(event);
+  }
+  return wishlist;
+};
+
+const updateWishlist = (handle,title) => {
+  const wishlist = getWishlist();
+  const indexInWishlist = wishlist.findIndex(element => element.includes(handle+(title? (";"+title+";"+Shopify.locale) : "")));
+  if (indexInWishlist === -1) wishlist.push(handle+(title? (";"+title+";"+Shopify.locale) : ""));
+  else wishlist.splice(indexInWishlist, 1);
+  return setWishlist(wishlist);
+};
+
+const wishlistContains = (handle) => {
+  const wishlist = getWishlist();
+  return wishlist.some(element => element.includes(handle));
+};
+
+const resetWishlist = () => {
+  return setWishlist([]);
+};
+
+const getProductItemHtml = (product, sectionId, title) => {
+  
+  /*const badgeHtml = `  <span
+    class="productgriditem__badge"
+    style="color: ; background-color: "
+  >
+    
+  </span>`*/
+  let imageHtml = "";
+  if (product.featured_image){
+      let img;
+      product.media.forEach(element => {
+        if(element.src.includes(product.featured_image)){
+          img = element;
+        }
+      })
+      imageHtml = `  
+            <figure
+            class="productitem--image"
+            data-product-item-image
+            
+          >
+                <img
+                  src="${img.src}"
+                  data-rimg="lazy"
+                  data-rimg-max="${ img.width }x${ img.height }"
+                  class="productitem--image-primary"
+              >
+          </figure>
+  `
+  }
+  const htmlOutput = `
+<li
+  id="product-grid-item-${sectionId}-${product.id}"
+  class="  productgrid--item imagestyle--medium"
+  data-product-item
+>
+  <div class="productitem" data-product-item-content>
+    <div class="wishlist-button-container">
+      <div
+        aria-label="Add to wishlist"
+        class="wishlist-button"
+        button-wishlist
+        data-product-wishlist-handle="${product.handle}"
+      ></div>
+    </div>
+
+    <div class="productitem__container">
+      <div class="productitem__image-container">
+        <a
+          class="productitem--image-link"
+          href="${product.url}"
+          aria-label="${product.url}"
+          tabindex="-1"
+          data-product-page-link
+          id="link-${sectionId}-${ product.id }"
+        >
+        ${imageHtml != "" ? imageHtml : ""}
+
+        </a>
+      </div>
+
+      <div class="productitem--info">
+
+        <h2 class="productitem--title">
+          <a href="${product.url}" data-product-page-link>
+            ${ title ?? product.title }
+          </a>
+        </h2>
+      </div>
+    </div>
+  </div>
+</li>
+  `
+  return htmlOutput;
+}
+
+htmlToElement = (html) => {
+    var template = document.createElement('template');
+    html = html.trim();
+    template.innerHTML = html;
+    return template.content.firstChild;
+}
+

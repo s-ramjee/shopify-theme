@@ -1,0 +1,40 @@
+{% comment %}
+  @param image {Image}
+
+  @param image_text {String}
+
+  @param image_url {Image}
+{% endcomment %}
+
+<div
+  class="productgrid--item"
+>
+  <div class="productitem" style="width: fit-content">
+    <div class="productitem__container">
+      <div class="productitem__image-container">
+        <a
+          class="productitem--image-link"
+          href="{{ image_url }}"
+          aria-label="{{ image_url }}"
+          tabindex="-1"
+        >
+          <figure
+            class="productitem--image"
+            data-product-item-image
+            style="--product-grid-item-image-aspect-ratio: {{ image.aspect_ratio }};"
+          >
+            {% render 'rimg', img: image, size: '512x', lazy: true, class: 'productitem--image-primary', canvas: true %}
+          </figure>
+        </a>
+      </div>
+
+      <div class="productitem--info">
+        <h2 class="productitem--title">
+          <a href="{{ image_link }}" data-product-page-link>
+            {{ image_text }}
+          </a>
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>

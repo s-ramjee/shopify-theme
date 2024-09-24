@@ -1,0 +1,181 @@
+<style>
+  .cart-sidebar-discount {
+    display: flex;
+    flex-direction: column;
+    margin: 20px auto;
+  }
+  span.applied-discount-code-value>small {
+    background: #eee;
+    padding: 0px 10px;
+    color: #000;
+    font-weight: bold;
+    border-radius: 20px;
+  }
+  .loader {
+    border: 5px solid #f3f3f3;
+    border-top: 4px solid #000;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin .5s linear infinite;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #discount-code-error {
+    color: #e22120;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1;
+    display: none
+  }
+  .applied-discount-code-wrapper {
+    display: none;
+    background: #ddd;
+    padding: 3px 6px;
+    border-radius: 25px;
+  }
+  .applied-discount-code-value {
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  
+  .applied-discount-code-value:empty+button {
+    display: none;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .discount-form{
+	display: flex;
+    flex-direction:column;
+  }
+  .discount-form input{
+    padding-top: .625rem;
+  }
+</style>
+
+<div class="cart-sidebar-discount">
+  <span id="applied-discount-code" class="d-flex flex-column">
+    {{ 'cart.code_promo.label' | t }}:
+    {% comment %}
+    <span class="applied-discount-code-wrapper">
+      <span class="applied-discount-code-value"></span>
+      <button id="clear-discount-btn">X</button>
+    </span>
+    {% endcomment %}
+  </span>
+  <small id="discount-code-error">{{ "cart.code_promo.invalide" | t }}</small>
+  <div class="discount-form">
+	  <input class="form-field-input form-field-text my-2" type="text" id="discount-code-input" autocomplete="on" value="">
+	  <button id="apply-discount-btn" class="button-primary">{{ 'cart.code_promo.valider' | t }}</button>
+  </div>
+</div>
+
+{% assign sample_code = section.settings.sample_code %}
+{% assign sample_code_id = section.settings.sample_code_id %}
+<script>
+document.addEventListener("DOMContentLoaded", async function(event) { 
+  //let clearBtn = document.querySelector("#clear-discount-btn");
+  let applyBtn = document.querySelector("#apply-discount-btn");
+  let discountCodeError = document.querySelector("#discount-code-error");
+  let discountCodeWrapper = document.querySelector("#applied-discount-code .applied-discount-code-wrapper");
+  let discountCodeValue = document.querySelector("#applied-discount-code .applied-discount-code-value");
+  let discountCodeInput = document.querySelector("#discount-code-input");
+  let authorization_token;
+  
+  let checkoutContainer = document.createElement('div');
+  document.body.appendChild(checkoutContainer);
+
+  applyBtn.addEventListener("click", async function(e){
+    e.preventDefault()
+    await applyDiscount(discountCodeInput.value);
+  });
+
+  
+  
+  async function applyDiscount(code) {
+    {% if customer and sample_code %}
+      if(code == "{{sample_code}}"){
+        //Disable all links and buttons in cart
+        const interactiveElements = document.querySelectorAll("form a, form button");
+        interactiveElements.forEach(element => {element.setAttribute("disabled","true")})
+        //Get cart
+        const cart = await getCart();
+        //Get all the variants of type "echantillon"
+        if(cart){
+          const samples = cart.items.filter(element => element.variant_options.includes("1"));
+          //if (last_sample_year == this_year) and ( > 5-(how many samples he got before)), display error
+          if({% if customer.metafields.custom.last_ordered_sample_date.value %}( (new Date().getFullYear()) == {{customer.metafields.custom.last_ordered_sample_date.value | date:"%Y"}} ) &&{% endif %} 
+            ( {% if customer.metafields.custom.ordered_samples.value %}5-{{customer.metafields.custom.ordered_samples.value}} {% else %}5{% endif %} < samples.length)){
+            alert("{{'cart.general.max_samples_limit_reached' | t }}");
+            interactiveElements.forEach(element => {element.removeAttribute("disabled")})
+            return;
+            }
+          else{
+            //else Add the variants to the discount
+            const samplesIds = samples.map(sample =>  "gid://shopify/ProductVariant/"+sample.id)
+            if((samplesIds.length > 0) && access_token){
+              //CALL API
+                await fetch(OUTIL_PERSO_API + 'products/addVariantsToDiscount',{
+                method: "POST",
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${access_token}`
+                },
+                body: JSON.stringify({
+                  discountId: "gid://shopify/DiscountCodeNode/{{sample_code_id}}", variantsIds: samplesIds
+                })
+              })
+            }
+          }
+        }
+        interactiveElements.forEach(element => {element.removeAttribute("disabled")})
+      }
+    {% endif %}
+    discountCodeError.style.setProperty('display',"none");
+    applyBtn.innerHTML = "<div class='loader'></div>";
+    applyBtn.style.pointerEvents = "none";
+    await fetch("/payments/config", {"method": "GET"})
+    .then(function(response) { return response.json() })
+    .then(function(data) {
+        const checkout_json_url = '/wallets/checkouts/';
+        authorization_token = btoa(data.paymentInstruments.accessToken)
+        fetch('/cart.js', {}).then(function(res){return res.json();})
+        .then(function(data){
+
+        let body = {"checkout": { "country": Shopify.country,"discount_code": code,"line_items": data.items, 'presentment_currency': Shopify.currency.active } }
+        fetch(checkout_json_url, {
+          "headers": {
+            "accept": "*/*", "cache-control": "no-cache",
+            "authorization": "Basic " + authorization_token,
+            "content-type": "application/json, text/javascript",
+            "pragma": "no-cache", "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors", "sec-fetch-site": "same-origin"
+          },
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "method": "POST", "mode": "cors", "credentials": "include",
+          "body": JSON.stringify(body)
+      })
+      .then(function(response) { return response.json() })
+      .then(async function(data) {
+        if(data.checkout && data.checkout.applied_discounts.length > 0){
+          let discountApplyUrl = "/discount/"+code+"?v="+Date.now()+"&redirect=/checkout/";
+          await fetch(discountApplyUrl, {}).then(function(response) { return response.text(); })
+          /*discountCodeWrapper.style.display = "inline";
+          discountCodeError.innerHTML = "";
+          discountCodeValue.innerHTML = data.checkout.applied_discounts[0].title + " (" + data.checkout.applied_discounts[0].amount + ' ' + Shopify.currency.active + ")";*/
+          location.reload();
+        }else{
+          discountCodeError.style.setProperty('display',"block", "important");
+        }
+      }).finally(function(params) {
+        applyBtn.innerHTML = "{{ 'cart.code_promo.valider' | t }}";
+        applyBtn.style.pointerEvents = "all";
+      });
+    });
+  });
+}
+});
+</script>

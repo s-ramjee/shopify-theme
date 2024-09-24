@@ -1,0 +1,193 @@
+{%- capture color_key -%}
+    {%- if localization.language.iso_code == "de" -%}
+      Farbe
+    {%- elsif localization.language.iso_code == "it" -%}
+    Colore
+    {%- else -%}
+    Colour
+      {%- endif -%}
+{% endcapture %}
+{%- capture format_key -%}
+    {%- if localization.language.iso_code == "de" -%}
+      Format
+    {%- elsif localization.language.iso_code == "it" -%}
+    Formato
+    {%- else -%}
+    Format
+      {%- endif -%}
+{%- endcapture -%}
+{% assign downcased_color_key = color_key | strip | downcase %}
+{% assign variantCount = product.variants | size %}
+{% if product.available and variantCount > 0 %}
+  <div class="product-swatches">
+    {% for option in product.metafields.custom.options_icons.value %}
+      {% if option.display_swatch %}
+        {% assign downcased_option = option.option_name | downcase %}
+        <div class="product-swatch" {{ downcased_option }}>
+          {% if downcased_option contains downcased_color_key %}
+            {% for value in option.option_values.value %}
+              {% comment %}
+                {% if value.color_value %}
+                <div
+                  class="swatch-item color-swatch"
+                  id="div-{{ section.id }}-{{product.id}}-{{ value.option_value | replace: " ", "" }}"
+                  value="{{ value.option_value }}"
+                  style="background-color: {{ value.color_value }}"
+                  name="{{ option.option_name}}-swatch"
+                ></div>
+                {% endif %}
+              {% endcomment %}
+            {% endfor %}
+          {% else %}
+            {% for value in option.option_values.value %}
+              {% if value.option_icon %}
+                <div
+                  class="swatch-item"
+                  id="div-{{ section.id }}-{{product.id}}-{{ value.option_value | replace: " ", ""}}"
+                  value="{{ value.key }}"
+                  name="{{ option.option_name}}-swatch"
+                >
+                  {% render 'rimg', img: value.option_icon, class: 'swatch-image' %}
+                  {% assign option_count = option_count | plus: 1 %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function (){
+      
+      const images = [];
+      {% if product.variants.size > 1 %}
+      {% assign lang = localization.language.iso_code | upcase | prepend: "LANG=" %}
+        {% for image in product.images %}
+          {% assign image_alt = image.alt | upcase %}
+          {% if image_alt contains lang  %}
+            images.push({alt: "{{ image_alt }}", src:"{{  image.src | image_url }}"})
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      
+      {% assign jsSafeSectionId = section.id | replace: "-", "" %}
+      const product{{ jsSafeSectionId }}{{product.id}} = {{product | json }}
+
+      const allVariantsOptions{{ jsSafeSectionId }}{{product.id}} = {};
+      let variantOptions;
+      let optionValues;
+        {% for v in product.variants %}
+         variantOptions = {};
+           {% for option in v.metafields.custom.options.value %}
+             optionValues = [];
+             {% for option_value in option.option_values.value %}
+                optionValues.push(
+                  {
+                    value: "{{option_value.option_value.value}}",
+                    price_increase: {{option_value.price_increase.value}} {%- if option_value.option_icon -%}, option_icon: "{{option_value.option_icon.value | image_url}}"  {%- endif -%}
+                  }
+                )
+             {% endfor %}
+             variantOptions['{{option.option_type.value}}']= optionValues
+           {% endfor %}
+          allVariantsOptions{{ jsSafeSectionId }}{{product.id}}[{{ v.id }}]=variantOptions
+       {% endfor %}
+       //console.log(allVariantsOptions{{ jsSafeSectionId }}{{product.id}})
+      const aElement = document.getElementById("link-{{ section.id }}-{{product.id}}");
+      const titleElement = document.querySelector("#product-grid-item-{{ section.id }}-{{product.id}} h2 [data-product-page-link]");
+      const baseLink = aElement.getAttribute("href").split("?")[0];
+      const productImage = document.querySelector("#link-{{ section.id }}-{{product.id}} img");
+      const mainProductImage = document.querySelector("#product-grid-item-{{ section.id }}-{{product.id}} .productitem--image-primary")
+      const hrefSplit = aElement.href.split("variant=");
+      let currentVariant = hrefSplit.length > 1 ? (getVariantById(hrefSplit[hrefSplit.length -1 ],product{{ jsSafeSectionId }}{{product.id}}.variants) ?? product{{ jsSafeSectionId }}{{product.id}}.variants[0]) : product{{ jsSafeSectionId }}{{product.id}}.variants[0];
+    setColors(allVariantsOptions{{ jsSafeSectionId }}{{product.id}}[currentVariant.id].{{color_key | strip}} ?? [])
+    document.querySelectorAll("#product-grid-item-{{ section.id }}-{{product.id}} div.product-swatch[{{format_key}}] div").forEach(swatch => {
+        swatch.addEventListener("click",(e) => {handleFormat(e,swatch, true)});
+        swatch.addEventListener("mouseenter",(e)=> {handleFormat(e,swatch,false)})
+            {% comment %}
+        swatch.addEventListener("mouseleave",(e)=> {upsertImage(currentVariant.featured_image, productImage,"{{ section.id }}","{{product.id}}"); setColors(allVariantsOptions{{ jsSafeSectionId }}{{product.id}}[currentVariant.id].Colour ?? [])})
+            {% endcomment %}  
+      swatch.addEventListener("mouseleave",(e)=> {upsertImage({src: mainProductImage.src, alt:mainProductImage.alt}, productImage,"{{ section.id }}","{{product.id}}"); setColors(allVariantsOptions{{ jsSafeSectionId }}{{product.id}}[currentVariant.id].Colour ?? [])})
+    })
+    document.querySelectorAll("#product-grid-item-{{ section.id }}-{{product.id}} div.product-swatch[{{color_key}}] div").forEach(swatch => {
+        swatch.addEventListener("click",(e) => {handleColor(e,swatch, true)});
+        swatch.addEventListener("mouseenter",(e)=> {handleColor(e,swatch,false)})
+        swatch.addEventListener("mouseleave",(e)=> {upsertImage(currentVariant.featured_image, productImage,"{{ section.id }}","{{product.id}}");})
+    })
+
+    //Affiche les couleurs qui figurent dans colors, enleve la couleur selectionné si unselect est true
+    function setColors(colors,unselect= false){
+      const colorsString = colors.reduce((accumulator, currentValue) => accumulator + ";"+currentValue.value, "");
+      const colorSwatches = document.querySelectorAll("#product-grid-item-{{ section.id }}-{{product.id}} div.product-swatch[{{color_key}}] div");
+      colorSwatches.forEach(colorSwatch => {
+        if(unselect){
+          colorSwatch.classList.remove("selected");
+        }
+        if(colorsString.includes(colorSwatch.getAttribute("value"))){
+          colorSwatch.style.display =""
+        }
+        else{
+          colorSwatch.style.display = "none";
+        }
+      })
+    }
+
+    //Affiche l'image et les couleurs correspondant au format, effectue la selection si changed est à true
+    function handleFormat(e, formatSwatch, changed = false){
+        //const bestMatch = getMatchingVariant(product{{ jsSafeSectionId }}{{product.id}}.variants, currentVariant ,formatSwatch.getAttribute("value"),0);
+        const bestMatch = getVariantBySku(product{{ jsSafeSectionId }}{{product.id}}.variants, formatSwatch.getAttribute("value"))
+      let image;
+
+      if(bestMatch){
+        images.some(img => {
+          let format;
+          const altSplit = img.alt.split(",");
+          altSplit.some(a => {
+            const segmentSplit= a.split("=");
+            if(segmentSplit[0].toUpperCase()=="FORMAT"){
+              format = segmentSplit[1];
+              return true;
+            }
+          } )
+          if(bestMatch.sku.includes(format)){
+            image = img;
+            return true
+          }
+        });
+        if(image)
+        upsertImage({src: image.src, alt: image.alt}, productImage,"{{ section.id }}","{{product.id}}");
+              {% comment %}
+
+        upsertImage(bestMatch.featured_image, productImage,"{{ section.id }}","{{product.id}}");
+                {% endcomment %}
+
+        const colors = allVariantsOptions{{ jsSafeSectionId }}{{product.id}}[bestMatch.id].{{color_key | strip}} ?? [];
+        setColors(colors, changed);
+      if(changed){
+        document.querySelectorAll('#product-grid-item-{{ section.id }}-{{product.id}} div.product-swatch[{{format_key}}] .selected').forEach((e)=>{e.classList.remove('selected')});
+        formatSwatch.classList.add("selected");
+        currentVariant = bestMatch;
+        aElement.setAttribute("href",baseLink + "?variant="+bestMatch.id);
+        titleElement.setAttribute("href",baseLink + "?variant="+bestMatch.id);
+      }
+        }
+    }
+
+    //Affiche l'image correspondant à la couleur, effectue la selection si changed est à true
+    function handleColor(e, colorSwatch, changed = false){
+      const bestMatch = getMatchingVariant(product{{ jsSafeSectionId }}{{product.id}}.variants, currentVariant ,colorSwatch.getAttribute("value"),1);
+        upsertImage(bestMatch.featured_image, productImage,"{{ section.id }}","{{product.id}}");
+        if(changed){
+            document.querySelectorAll('#product-grid-item-{{ section.id }}-{{product.id}} div.product-swatch[{{color_key}}] .selected').forEach((e)=>{e.classList.remove('selected')});
+            colorSwatch.classList.add("selected")
+            currentVariant = bestMatch;
+            aElement.setAttribute("href",baseLink + "?variant="+bestMatch.id);
+            titleElement.setAttribute("href",baseLink + "?variant="+bestMatch.id);
+        }
+    }
+    }
+  );
+</script>

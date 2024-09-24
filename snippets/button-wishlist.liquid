@@ -1,0 +1,21 @@
+{% comment %}
+  Shopify Wishlist
+  Usage:
+    - Markup: {%- render 'button-wishlist', product: product -%}
+    - Place this snippet inside your existing product card snippet
+
+  Parameters:
+    - product: <Shopify product> (required)
+{% endcomment %}
+{%- if product.handle != blank -%}
+  <div class="wishlist-button-container">
+    <div
+      aria-label="Add to wishlist"
+      class="wishlist-button"
+      button-wishlist
+      data-product-wishlist-handle="{{ product.handle }}"
+      data-product-wishlist-title="{{ product.title }}"
+      {% comment %}data-product-wishlist-url="{%- if product.metafields.custom.main_collection -%}{{ product.url | within: product.metafields.custom.main_collection.value }}{% else %}{{ product.url }}{%- endif -%}"{% endcomment %}
+    ></div>
+  </div>
+{%- endif -%}

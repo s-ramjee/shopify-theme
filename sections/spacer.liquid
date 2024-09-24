@@ -1,0 +1,30 @@
+<script
+  type="application/json"
+  data-section-id="{{ section.id }}"
+  data-section-type="spacer"
+></script>
+
+{% schema %}
+{
+  "name": "Spacer",
+  "class": "spacer--section",
+  "settings": [
+    {
+      "type": "range",
+      "id": "spacer_height",
+      "label": "Spacer Height (px)",
+      "min": 10,
+      "max": 500,
+      "step": 5,
+      "default": 50
+    }
+  ],
+  "presets": [
+    {
+      "name": "Default Spacer",
+      "category": "Layout"
+    }
+  ]
+}
+{% endschema %}
+<div class="spacer" style="height: {{ section.settings.spacer_height }}px;"></div>

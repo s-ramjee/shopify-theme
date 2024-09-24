@@ -1,0 +1,3 @@
+{% unless template.name == 'index' or template == 'index' or request.page_type == 'index' %}
+  {% section 'dynamic-highlights-banner' %}
+{% endunless %}

@@ -1,0 +1,338 @@
+<section class="contact-page">
+  {% if section.settings.image %}
+    <div class="contact-image">
+      {% assign image = section.settings.image %}
+      {% assign alt = section.settings.image.alt | escape %}
+      {% render 'rimg', img: image, alt: alt %}
+    </div>
+  {% endif %}
+  <article
+    class="site-page d-flex flex-column align-items-center mt-0 justify-content-center {% if section.settings.image %}w-50 {% else %} w-100 {% endif %}"
+    data-template-page
+    data-template-contact
+  >
+    <header class="page-masthead {% if section.settings.image %}align-self-start ps-5 {% else %} align-self-center {% endif %} my-5 mb-0 mt-0 mx-0">
+      <h1 class="page-title">
+        {{ page.title }}
+      </h1>
+    </header>
+    {% form 'contact' %}
+      {% if page.content != blank %}
+        <div class="page-content rte">
+          {{ page.content }}
+        </div>
+      {% endif %}
+
+      <div class="contact-page-content my-0">
+        {% assign has_message = false %}
+
+        {% if form.errors != blank %}
+          {% assign has_message = true %}
+          {% assign message_type = 'error' %}
+        {% endif %}
+
+        {% if form.posted_successfully? %}
+          {% assign has_message = true %}
+          {% assign message_type = 'success' %}
+        {% endif %}
+
+        {% if has_message %}
+          <div class="contact-message message--{{ message_type }}">
+            {% case message_type %}
+              {% when 'success' %}
+                <p>
+                  {{ 'contact.form.post_success' | t }}
+                </p>
+              {% when 'error' %}
+                {{ form.errors | default_errors }}
+            {% endcase %}
+          </div>
+        {% endif %}
+
+        <div class="form-fields-columns">
+          <div class="d-flex justify-content-between w-100">
+            <div class="form-field form-field--half mx-0" id="name-div">
+              <div style="position:relative">
+                {% assign value = '' %}
+                {%- if form.name -%}
+                  {% assign value = form.name %}
+                {%- elsif customer -%}
+                  {% assign value = customer.name %}
+                {%- endif -%}
+
+                <input
+                  class="form-field-input form-field-text {% if form.errors contains 'name' %}form-field-error{% endif %}"
+                  id="contact_name"
+                  name="contact[name]"
+                  type="text"
+                  value="{{ value }}"
+                >
+
+                <label class="form-field-title" for="contact_name">
+                  {{ 'contact.form.name' | t }}
+                </label>
+              </div>
+            </div>
+
+            <div class="form-field form-field--half mx-0" id="last-name-div">
+              <div style="position: relative">
+                {% assign value = '' %}
+                {%- if form.last_name -%}
+                  {% assign value = form.last_name %}
+                {%- elsif customer -%}
+                  {% assign value = customer.last_name %}
+                {%- endif -%}
+                <input
+                  class="form-field-input form-field-text"
+                  id="contact_last_name"
+                  name="contact[last_name]"
+                  type="text"
+                  value="{{ value }}"
+                >
+
+                <label class="form-field-title" for="contact_last_name">
+                  {{ 'contact.form.last_name' | t }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field mx-0" id="email-div" style="float:inherit">
+            <div style="position: relative">
+              {% assign value = '' %}
+              {%- if form.email -%}
+                {% assign value = form.email %}
+              {%- elsif customer -%}
+                {% assign value = customer.email %}
+              {%- endif -%}
+              <input
+                class="form-field-input form-field-text {% if form.errors contains 'email' %}form-field-error{% endif %}"
+                id="contact_email"
+                name="contact[email]"
+                type="text"
+                value="{{ value }}"
+                autocorrect="off"
+                autocapitalize="off"
+              >
+
+              <label class="form-field-title" for="contact_email">
+                {{ 'contact.form.email' | t }}
+              </label>
+            </div>
+          </div>
+
+          {% comment %}
+          <div class="form-field-row">
+            <div style="position: relative">
+              <select
+                class="form-field-input form-field-text"
+                id="request_type"
+                name="contact[request_type]"
+              >
+                {% for block in section.blocks %}
+                  {% if block.type == 'request-type' %}
+                    <option>{{ block.settings.request_type }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+
+              <label class="form-field-title" for="request_type">
+                {{ 'contact.form.type' | t }}
+              </label>
+            </div>
+          </div>
+          {% endcomment %}
+
+              <div class="options-selection__select-wrapper mb-3">
+                <div class="options-selection__select">
+                  <label class="form-field-title" for="request_type">
+                    {{ 'contact.form.type' | t }}
+                  </label>
+                  <div class="options-selection__input-select-wrapper">
+                    <select
+                      class="form-field-input form-field-text"
+                      id="request_type"
+                      name="contact[request_type]"
+                    >
+                      {% for block in section.blocks %}
+                        {% if block.type == 'request-type' %}
+                          <option>{{ block.settings.request_type }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <div class="options-selection__input-select-chevron">
+                      <svg aria-hidden="true" focusable="false" role="presentation" width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4.5L7 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+                        <path d="M4 4.5L1 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+          <div class="form-field mx-0" id="phone-div" style="float:inherit">
+            <div style="position: relative">
+              {% assign value = '' %}
+              {%- if form.phone -%}
+                {% assign value = form.phone %}
+              {%- elsif customer -%}
+                {% assign value = customer.phone %}
+              {%- endif -%}
+              <input
+                class="form-field-input form-field-text {% if form.errors contains 'phone' %}form-field-error{% endif %}"
+                id="contact_phone"
+                name="contact[phone]"
+                type="tel"
+                value="{{ value }}"
+                autocorrect="off"
+                autocapitalize="off"
+              >
+
+              <label class="form-field-title" for="contact_phone">
+                {{ 'contact.form.phone' | t }}
+              </label>
+            </div>
+          </div>
+
+          <div class="form-field mx-0" id="product_ref-div" style="float:inherit">
+            <div style="position: relative">
+              {% assign value = '' %}
+              {%- if form.product_ref -%}
+                {% assign value = form.product_ref %}
+              {%- elsif customer -%}
+                {% assign value = customer.product_ref %}
+              {%- endif -%}
+              <input
+                class="form-field-input form-field-text {% if form.errors contains 'product_ref' %}form-field-error{% endif %}"
+                id="contact_product_ref"
+                name="contact[product_ref]"
+                type="number"
+                value="{{ value }}"
+                autocorrect="off"
+                autocapitalize="off"
+              >
+
+              <label class="form-field-title" for="contact_product_ref">
+                {{ 'contact.form.product_ref' | t }}
+              </label>
+            </div>
+          </div>
+
+          <div class="form-field-row w-100 mx-0" id="text-area-div">
+            {% assign value = '' %}
+
+            {%- if form.body -%}
+              {% assign value = form.body %}
+            {%- endif -%}
+            <div style="position:relative">
+              <textarea
+                class="
+                  form-field-input
+                  form-field-textarea
+                  {% if form.errors contains 'body' %}
+                    form-field-error
+                  {% endif %}
+                "
+                id="contact_message"
+                name="contact[message]"
+              >
+            {{- value -}}
+          </textarea>
+
+              <label class="form-field-title" for="contact_message">
+                {{- 'contact.form.message' | t -}}
+              </label>
+            </div>
+          </div>
+
+          <button class="button-primary contact-form-button" type="submit">
+            {{ 'contact.form.send' | t }}
+          </button>
+        </div>
+      </div>
+    {% endform %}
+  </article>
+</section>
+<style>
+      @media screen and (max-width: 720px) {
+        .contact-image{
+          display: none;
+        }
+        .contact-form{
+          width:100%
+        }
+        .site-page{
+          width:100%!important;
+          margin-top: 30px !important;
+        }
+        .page-masthead{
+          padding-left: 10px!important;
+        }
+    }
+      @media (min-width: 720px) {
+        .contact-image{
+          width: 50%
+        }
+        .contact-image img{
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .contact-form{
+          width: 100%;
+          padding-right: 2rem;
+          padding-left: 2rem;
+        }
+      }
+    .contact-page{
+      display:flex;
+      margin-top: 60px;
+    }
+    .login-text{
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .form-field--half{
+      width: calc(50% - 10px) !important;
+    }
+  .form-field-row{
+    margin-bottom: 1.25rem!important;
+  }
+  .options-selection__select-wrapper label{
+    top:20%;
+    transform: translateY(-20%);
+    font-size: 0.8125rem;
+  }
+  .options-selection__select-wrapper select{
+    -webkit-appearance: initial;
+  }
+</style>
+{% schema %}
+{
+  "name": "t:sections.contact.name",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:sections.contact.header_1.content"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.contact.image.label"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "request-type",
+      "name": "t:sections.contact.request_types.label",
+      "settings": [
+         {
+           "type": "text",
+           "id": "request_type",
+           "label": "t:sections.contact.request_types.label"
+         }
+       ]
+    }
+  ]
+}
+{% endschema %}

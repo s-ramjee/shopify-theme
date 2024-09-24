@@ -1,0 +1,680 @@
+{% assign compare_at_price = 0 %}
+{% assign option_serenite = all_products['option-serenite'] %}
+{% assign option_serenite_variant = all_products['option-serenite'].variants[0] %}
+{% for variant in item.product.variants %}
+  {% if variant.id == item.variant.id and variant.compare_at_price > item.price %}
+    {% assign compare_at_price = variant.compare_at_price %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+{% assign sample_code_id = section.settings.sample_code_id %}
+{%- assign item_has_discounts = false -%}
+{%- if item.line_level_discount_allocations.size > 0 -%}
+  {%- assign item_has_discounts = true -%}
+{%- endif -%}
+{% unless item.variant_id == option_serenite_variant.id %}
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    .cart_item_custom_buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-top: 1rem;
+    }
+
+    @media screen and (max-width: 720px) {
+      .cart_item_custom_buttons {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 16px;
+      }
+    }
+
+    .cart-item {
+      border-radius: 8px;
+      border: 1px solid var(--gray-300, #D0D5DD);
+      box-shadow: none;
+    }
+
+    .cart-item__info {
+      align-items: flex-start !important;
+    }
+
+    .cart-item--inner {
+      align-items: flex-start !important;
+    }
+
+    .cart-item__remove {
+      margin-top: 2px;
+    }
+
+    .cart-item__total {
+      margin-top: 2px;
+    }
+
+    .cart-item--content-title a {
+      color: var(--noir, #373737);
+      font-family: Work Sans;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: normal;
+    }
+
+    .car-item--product-vendor {
+      color: var(--couleurs-principales-gris, #A7A7A7);
+      font-family: Work Sans;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: normal;
+      margin-bottom: 8px;
+    }
+
+    .cart-item--product-options {
+      color: var(--couleurs-principales-gris, #A7A7A7);
+      font-family: DM Sans;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 24px;
+      margin-bottom: 4px;
+    }
+
+  .edit-text{
+  cursor: pointer;
+  }
+
+  .edit-text:disabled{
+  cursor: not-allowed;
+  color: #6a6a6a;
+  }
+  </style>
+
+  <li
+    class="cart-item"
+    data-cartitem
+    data-cartitem-id="{{ item.variant_id }}"
+    data-cartitem-key="{{ item.key }}"
+    data-cartitem-price="{{ item.price }}"
+    id="item-{{ item.key }}"
+    {% if item.product.type == "Card" %}
+    style="margin-bottom: 0;"
+    {% endif %}
+  >
+    <figure class="cart-item--image-wrapper" id="item-{{ item.key | replace:':',''}}-figure">
+      <a style="position:relative">
+        {% if item.image %}
+          {% render 'rimg', img: item.image, alt: item.title, size: '120x' %}
+        {% elsif item.product.metafields.custom.original_product.value %}
+          <span class="loader"></span>
+          {% render 'rimg', style:'filter: blur(4px)', img: item.product.metafields.custom.original_product.value.featured_image, alt: item.product.metafields.custom.original_product.value.featured_image.alt, size: '120x' %}
+        {% else %}
+          {{ 'image' | placeholder_svg_tag: 'placeholder--image' }}
+        {% endif %}
+      </a>
+    </figure>
+
+    <div class="cart-item--inner">
+      <div class="cart-item--content">
+        <h2 class="cart-item--content-title">
+          <a>
+            {{ item.product.title }}
+          </a>
+        </h2>
+
+        {% unless item.product.type == "Card" %}
+          {% unless item.product.has_only_default_variant %}
+            {% for option in item.product.options %}
+              <div class="cart-item--product-options">
+                {% comment %}
+                  <span class="cart-item--option-name">{{ option }}</span>
+                {% endcomment %}
+                {{ item.variant.options[forloop.index0] }}
+              </div>
+            {% endfor %}
+          {% endunless %}
+        {% else %}
+          {% for tag in item.product.tags %}
+            {% if tag contains 'option__' %}
+              {% assign tag_split = tag | split:"__" %}
+              {% assign option_name = tag_split.last %}
+              {% assign option_name = option_name | replace: "(", "" %}
+              {% assign option_name = option_name | replace: ")", "" %}
+              {% assign option_name = option_name | replace: " ", "_" %}
+              {% assign option_name = option_name | replace: "é", "e" %}
+              {% assign translation_key = option_name | prepend: "product.options." %}
+              {%- capture display_text -%}
+                {{ translation_key | t }}
+              {%- endcapture -%}
+              {% unless display_text contains "Translation missing" %}
+              <div class="cart-item--product-options">
+                {{ display_text }}
+              </div>
+              {% endunless %}
+            {% endif %}
+          {% endfor %}
+        {% endunless %}
+          
+        {% if item.selling_plan_allocation.selling_plan %}
+          <span class="cart-item--line-item-subscriptions">{{ item.selling_plan_allocation.selling_plan.name }}</span>
+        {% endif %}
+
+        {% comment %}
+          <div class="cart-item--content-price">
+            <span class="cart-item--price-title">
+              {{ 'cart.general.price' | t }}
+            </span>
+
+            {% if compare_at_price > item.price or item.original_price > item.final_price %}
+              <span class="visually-hidden">{{ 'product_price.price.original' | t }}</span>
+              <s class="cart-item--sale-price money">
+                {%- if item_has_discounts -%}
+                  {{ item.original_price | money }}
+                {%- else -%}
+                  {{ compare_at_price | money }}
+                {%- endif %}
+              </s>
+              <span class="visually-hidden">{{ 'product_price.price.current' | t }}</span>
+            {% endif %}
+
+            <span class="money {% if item_has_discounts %}cart-item--discount-price{% endif %}">
+              {%- if item_has_discounts -%}
+                {{ item.final_price | money }}
+              {%- else -%}
+                {{ item.original_price | money }}
+              {%- endif %}
+            </span>
+          </div>
+        {% endcomment %}
+
+        {% capture total_quantity %}<span class="cart-item--total-quantity" data-total-quantity>{{ item.unit_price_measurement.quantity_value }}{{ item.unit_price_measurement.quantity_unit }}</span>{% endcapture %}
+        {% capture unit_price %}<span class="cart-item--unit-price-amount money" data-unit-price-amount>{{ item.unit_price | money }}</span>{% endcapture %}
+        {% capture unit_measure %}<span class="cart-item--unit-price-measure" data-unit-price-measure>{%- if item.unit_price_measurement.reference_value != 1 -%}{{ item.unit_price_measurement.reference_value }}{%- endif %}{{ item.unit_price_measurement.reference_unit }}</span>{% endcapture %}
+
+        {% if item.unit_price_measurement %}
+          <div class="cart-item--unit-price">
+            {{
+              'product.general.price_per_unit_html'
+              | t: total_quantity: total_quantity, unit_price: unit_price, unit_measure: unit_measure
+              | strip_newlines
+            }}
+          </div>
+        {% endif %}
+
+        {%- if item_has_discounts -%}
+          <ul class="discount-list" aria-label="{{ 'product.general.discounts' | t }}">
+            {% for discount_allocation in item.line_level_discount_allocations %}
+              <li class="discount-list-item">
+                {% render 'icon-library', id: 'icon-sale-tag' %}
+                {{ discount_allocation.discount_application.title }}
+                (-<span class="money">{{ discount_allocation.amount | money }}</span>)
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {% if show_sku %}
+          <div
+            class="
+              cart-item--sku
+              {% if item.sku == empty %}cart-item--sku-empty{% endif %}
+            "
+          >
+            {{ 'product.general.sku_html' | t: sku: item.sku | strip_newlines }}
+          </div>
+        {% endif %}
+
+        {% if settings.inventory_status %}
+          {% if item.variant.inventory_quantity > 0
+            and item.variant.inventory_quantity <= settings.low_stock_threshold
+          %}
+            {%
+              render 'product-stock-level',
+              inventory_display: settings.inventory_display,
+              inventory_transfer: settings.inventory_transfer_notice,
+              variant: item.variant,
+              verbose: false,
+            %}
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="cart-item__info flex-column">
+        <div class="w-100 d-flex justify-content-around flex-wrap">
+          <div class="cart-item__quantity">
+            {% if item.product.type == 'Card' %}
+              {% comment %}
+                  Get the variants
+                  Display a select
+                  On change, change the selected variant
+                "{{ 'product.general.price_per_unit' | t : quantity: "%s", unit_price:"%s",total_price:"%s" }}"
+              {% endcomment %}
+              <div class="options-selection__select mt-2">
+                  <label class="options-selection__select-label">
+                    {{ 'product.general.quantity' | t }}
+                  </label>
+                <div style="position: relative" class="options-selection__input-select-wrapper">
+                    <select
+                      class="options-selection__input-select"
+                      id="{{ item.key }}-quantity"
+                      autocomplete="off"
+                    >
+                      {% for variant in item.product.variants %}
+                        <option
+                          {% comment %}
+                            {% if option_value.price_increase %}
+                              price_increase="{{ option_value.price_increase.value }}"
+                            {% endif %}
+                            {% if forloop.first %}
+                              selected
+                            {% endif %}
+                            value="{{ option_value.option_value }}"
+                            id="{{ option.option_type }}{{ product.id }}{{ option_value.option_value }}"
+                          {% endcomment %}
+                          value="{{ variant.id }}"
+                          {% if variant.id == item.id %}
+                            selected
+                          {% endif %}
+                          price="{{ variant.price }}"
+                        >
+                          {% assign variant_total_price = variant.price | money_without_currency %}
+                          {% assign variant_quantity = variant.option1 | plus: 0 | times: 1.0 %}
+                          {% assign variant_unit_price = variant.price | divided_by: variant_quantity | money_without_currency %}
+                          {{
+                            'product.general.price_per_unit'
+                            | t:
+                              quantity: variant.option1,
+                              unit_price: variant_unit_price,
+                              total_price: variant_total_price
+                          }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <div class="options-selection__input-select-chevron">
+                      <svg aria-hidden="true" focusable="false" role="presentation" width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4.5L7 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+                        <path d="M4 4.5L1 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+            {% else %}
+              {%
+                render 'quantity-selector',
+                context: 'cart',
+                item: item,
+              %}
+            {% endif %}
+          </div>
+
+          <div class="d-flex mt-3">
+            <div class="cart-item__total" style="width: fit-content; min-width:none">
+              <span class="visually-hidden">
+                {{- 'cart.general.total_line_price' | t -}}
+              </span>
+
+              {%- if item_has_discounts -%}
+                <span class="visually-hidden">
+                  {{- 'product_price.price.original' | t -}}
+                </span>
+
+                <s class="original-price money">
+                  {{- item.original_line_price | money -}}
+                </s>
+
+                <span class="visually-hidden">
+                  {{- 'product_price.price.current' | t -}}
+                </span>
+              {%- endif -%}
+
+              <div
+                id="{{ item.key }}-price"
+                class="
+                  money
+                  {% if item_has_discounts %}
+                    cart-item--discount-price
+                  {% endif %}
+                "
+                aria-live="polite"
+                data-cartitem-total
+              >
+                {%- for variant in item.product.variants -%}
+                  {%- if variant.id == item.id -%}
+                    {{ variant.price | money_without_currency }} €
+                  {%- endif -%}
+                {%- endfor -%}
+              </div>
+            </div>
+
+            <div class="cart-item__remove">
+              <a
+                class="cart-item__remove-link"
+                {% comment %}
+                  href="{{ routes.cart_change_url }}?line={{ item_index }}&amp;quantity=0"
+                  data-cartitem-remove
+                  data-no-instant
+                {% endcomment %}
+                aria-label="remove {{ item.product.title | escape }}"
+                id="{{ item.key }}-remove"
+              >
+                {%
+                  render 'icon-library',
+                  id: 'icon-remove',
+                %}
+              </a>
+            </div>
+          </div>
+        </div>
+    {% if item.product.metafields.custom.creation_id %}
+        <div style="align-self:end; line-height: 1.5rem;" class="cart_item_custom_buttons">
+          {% render 'edit-options-button-snippet',
+            item: item,
+          %}
+          <div class="edit-text button-primary" type="button" id="item-{{ item.key }}-edit" style="cursor:pointer" role="button">{{ 'cart.general.modifier' | t }}</div>
+          {% comment %}<span class="duplicate-text ms-3" id="item-{{ item.key }}-duplicate">{{ 'cart.general.dupliquer' | t }}</span>{% endcomment %}
+        </div>
+    {% endif %}
+      </div>
+    </div>
+  </li>
+  {% comment %}
+  Commentaire à supprimer lors de la remise de l'option sérénité
+  {% if item.product.type == "Card" %}
+  <div class="tab-list" id="item-{{ item.key }}-serenite" style="margin-bottom:1.5rem;">
+    <details class="collapsible-tab--option" id="serenity-wrapper">
+      <summary class="collapsible-tab__heading">
+        <span class="d-flex align-items-center" id="serenite-{{ item.key }}">
+          {%- if block.settings.collapsible_tab_icon != blank -%}
+            <img class="me-2" src="{{ block.settings.collapsible_tab_icon | img_url }}">
+          {%- endif %}
+
+          <div class="form-field w-100 mx-0">
+            <input
+              type="checkbox"
+              class="planet-cards-check"
+              id="serenite-{{ item.key }}-checkbox"
+              {% if item.properties['Option Serenite'] and item.properties['Option Serenite'] == 'true' %}
+                checked
+              {% endif %}
+            >
+
+            <label
+              class="checkbox-label planet-cards-check"
+            >
+              {{ option_serenite.title }}
+            </label>
+          </div>
+        </span>
+
+        <div class="total">
+          <span>+ {{ option_serenite.price | money_without_currency }} €</span>
+          {% render 'icon-chevron-down-small' %}
+        </div>
+      </summary>
+
+      <div class="collapsible-tab__text">
+        {{ block.settings.collapsible_tab_text }}
+        <div
+          class="collapsible-highlight"
+          style="color: {{ block.settings.collapsible_tab_highlight_color }}; background-color: {{ block.settings.collapsible_tab_highlight_background_color }}"
+        >
+          <h2>{{ block.settings.collapsible_tab_highlight_title }}</h2>
+          {{ option_serenite.description }}
+        </div>
+      </div>
+    </details>
+  </div>
+  {% endif %}
+  {% endcomment %}
+  <script>
+    let selectedVariantId{{item.key | replace: ':', ''}} = {{item.variant_id}};
+    document.addEventListener("DOMContentLoaded", async()=>{
+      let selectedVariantId = {{item.variant_id}}
+      let lineItemKey = "{{item.key}}"
+      let selectedLineItem = {{item | json}};
+      const lineItemElement = document.getElementById("item-{{ item.key }}");
+      const sereniteElement = document.getElementById("item-{{ item.key }}-serenite");
+      let hasOptionSerenite = {% if item.properties["Option Serenite"] and item.properties["Option Serenite"] == "true" %} true {% else %} false {% endif %};
+      const optionSereniteCheckboxSpan = document.getElementById("serenite-{{ item.key }}");
+      if(optionSereniteCheckboxSpan){
+        const optionSereniteCheckbox = document.getElementById("serenite-{{ item.key }}-checkbox")
+        optionSereniteCheckboxSpan.addEventListener("click",async ()=>{
+          window.onbeforeunload = emptyFunction
+          optionSereniteCheckboxSpan.setAttribute("disabled",true);
+          optionSereniteCheckbox.setAttribute("disabled",true);
+          const lineItems = await getCartItemsByVariantId({{ option_serenite_variant.id }});
+          const optionSereniteLineItem = (lineItems && lineItems.length > 0) ? lineItems[0] : null
+          const optionSereniteQuantity = (optionSereniteLineItem ) ? optionSereniteLineItem.quantity : 0;
+          if(hasOptionSerenite){
+            //Remove one product option serenite and remove line item property
+            if(optionSereniteQuantity >=1){
+              const optSereniteChange = {'id': optionSereniteLineItem.key, quantity: optionSereniteQuantity - 1 };
+              await changeCartItem(optSereniteChange);
+              const productChange = {'id': '{{item.key}}', properties: {"Option Serenite": null}};
+              await changeCartItem(productChange);
+              hasOptionSerenite = false;
+              optionSereniteCheckbox.removeAttribute("checked");
+            }
+          }else{
+            //Add one product option serenite and add line item property
+            await updateCart({ "{{ option_serenite_variant.id }}": optionSereniteQuantity + 1});
+            const productChange = {'id': '{{item.key}}', properties: {"Option Serenite": true}};
+            await changeCartItem(productChange);
+            hasOptionSerenite = true;
+            optionSereniteCheckbox.setAttribute("checked", true);
+          }
+          await updatePrice();
+          optionSereniteCheckboxSpan.removeAttribute("disabled");
+          optionSereniteCheckbox.removeAttribute("disabled");
+          window.onbeforeunload = ""
+      })
+        }
+    const removeItemButton = document.getElementById("{{ item.key }}-remove");
+      if(removeItemButton){
+        removeItemButton.addEventListener("click", async()=>{
+          window.onbeforeunload = emptyFunction
+          removeItemButton.setAttribute("disabled",true);
+          {% comment %}
+          Commentaire à enlever lors de la remise de l'option sérénité
+          const optionSereniteCheckbox = document.getElementById("serenite-{{ item.key }}-checkbox")
+          optionSereniteCheckboxSpan.setAttribute("disabled",true);
+          optionSereniteCheckbox.setAttribute("disabled",true);
+          
+          //Si on a choisit l'option sérénite pour ce produit, on l'enlève
+          if(hasOptionSerenite){
+            const lineItems = await getCartItemsByVariantId({{ option_serenite_variant.id }});
+            const optionSereniteLineItem = (lineItems && lineItems.length > 0) ? lineItems[0] : null
+            const optionSereniteQuantity = (optionSereniteLineItem ) ? optionSereniteLineItem.quantity : 0;
+            if(optionSereniteQuantity >=1){
+              const optSereniteChange = {'id': optionSereniteLineItem.key, quantity: optionSereniteQuantity - 1 };
+              await changeCartItem(optSereniteChange);
+            }
+          }
+          {% endcomment %}
+          const productChange = {'id': lineItemKey, properties: {"Option Serenite": null}, quantity: 0};
+          await changeCartItem(productChange);
+          hasOptionSerenite = false;
+        //Si c'est un échantillon, on l'enlève du discount
+          if(selectedLineItem.variant_title == '1' && access_token){
+          await fetch(OUTIL_PERSO_API + 'products/removeVariantsFromDiscount',{
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+          },
+          body: JSON.stringify({
+            discountId: "gid://shopify/DiscountCodeNode/{{sample_code_id}}", variantsIds: ["gid://shopify/ProductVariant/"+selectedVariantId]
+          })
+        })
+        }
+          window.onbeforeunload = ""
+          location.reload();
+        })
+      }
+
+    const quantitySelect = document.getElementById("{{ item.key }}-quantity");
+    const itemPrice = document.getElementById("{{ item.key }}-price");
+      if(quantitySelect){
+        const currentVariantId = quantitySelect.value;
+        quantitySelect.addEventListener("change",async (e)=> {
+          window.onbeforeunload = emptyFunction
+          quantitySelect.setAttribute("disabled",true);          
+          const oldId = selectedVariantId;
+          selectedVariantId{{item.key | replace: ':', ''}} = e.target.value
+          selectedVariantId = e.target.value;
+          if(selectedVariantId){
+
+          //Get the cookie, replace the variant id with the new one
+          const cookie = getCookieValue("cart_outil");
+          var pattern = new RegExp("\\b" + oldId + "\\b", "g");
+          
+          const expirationDateCart = new Date();
+          expirationDateCart.setDate(expirationDateCart.getDate() + 30);
+          document.cookie = `cart_outil=${cookie.replace(pattern, selectedVariantId)}; domain={{ request.host | split:'www'}}; expires=${expirationDateCart.toUTCString()}; path=/`;
+      
+
+            
+            const updates = {};
+            //updates[currentVariantId] = 0;
+            //updates[selectedVariantId] = 1;
+            //await updateCart(updates);
+            const changes = {'id': lineItemKey, quantity: 0 };
+            await changeCartItem(changes);
+            const newItems = {items: [{
+              id: selectedVariantId,
+              quantity: 1,
+              properties: {"Option Serenite": (hasOptionSerenite ? hasOptionSerenite : null)}
+            }]}
+            const t = await addCartItems(newItems);
+            if(itemPrice){
+              itemPrice.textContent = formatMoney(e.target.options[e.target.selectedIndex].attributes.getNamedItem("price").value,"\{\{ amount \}\}€");
+            }
+            await updatePrice();
+            const newLineItem = (await getCartItemsByVariantId(selectedVariantId))[0];
+            if(newLineItem){
+              selectedLineItem = newLineItem
+              lineItemKey = newLineItem.key
+              //Remove discount html elements
+              const discountsList = document.querySelector("#item-{{ item.key }} .discount-list".replace(":","\\:"))
+              if(discountsList){
+              const discountsListItems = document.querySelectorAll("#item-{{ item.key }} .discount-list-item".replace(":","\\:"));
+              discountsListItems.forEach(item => {item.remove()});
+              }
+
+              if(newLineItem.discounts && newLineItem.discounts.length > 0){
+                let newDiscountsList;
+                let originalPrice
+                //Si l'ancienne variante avait un discount, on réutilise certains éléments htmls (liste et prix avant réduction)
+                if(discountsList){
+                  newDiscountsList = discountsList;
+                  originalPrice = document.querySelector("#item-{{ item.key }} .cart-item__total s".replace(":","\\:"));
+                }
+                  //Sinon, on les crée
+                else{
+                  newDiscountsList = document.createElement("ul");
+                  newDiscountsList.classList.add("discount-list-item");
+                  newDiscountsList.setAttribute("aria-label","{{ 'product.general.discounts' | t }}");
+
+                  originalPrice = document.createElement("s");
+                  originalPrice.className = "original-price money"
+                }
+                //On affiche les codes avec le montant déduit par chaque code
+                newLineItem.discounts.forEach(itemDiscount => {
+                  const div = document.createElement('div');
+                  div.innerHTML= `<li class="discount-list-item">
+                    {% render 'icon-library', id: 'icon-sale-tag' %}
+                    ${itemDiscount.title}
+                    (-<span class="money">${formatMoney(itemDiscount.amount,"\{\{ amount \}\}€")}</span>)
+                  </li>`.trim();
+                  newDiscountsList.appendChild(div.firstChild)
+                })
+
+                  //On affiche l'ancien prix
+                  originalPrice.textContent = formatMoney(newLineItem.original_price,"\{\{ amount \}\}€")
+                  originalPrice.classList.remove("visually-hidden")
+
+                  //On affiche le prix final
+                  const finalPrice = document.getElementById("{{ item.key }}-price");
+                  finalPrice.classList.add("cart-item--discount-price");
+                  finalPrice.innerHTML = formatMoney(newLineItem.final_price,"\{\{ amount \}\}€");
+                  //Si l'ancienne variante n'avait pas de réduction, on ajoute l'élément de l'ancien prix
+                  if(!document.querySelector("#item-{{ item.key }} .cart-item__total s".replace(":","\\:"))){
+                    const priceContainer = document.querySelector("#item-{{ item.key }} .cart-item__total".replace(":","\\:"))
+                    priceContainer.insertBefore(originalPrice,finalPrice)
+                  }
+                }
+              else{
+                const originalPrice = document.querySelector("#item-{{ item.key }} .cart-item__total s".replace(":","\\:"));
+                if(originalPrice)
+                  originalPrice.classList.add("visually-hidden")
+                
+                const finalPrice = document.getElementById("{{ item.key }}-price");
+                finalPrice.classList.remove("cart-item--discount-price");
+                finalPrice.innerHTML = formatMoney(newLineItem.final_price,"\{\{ amount \}\}€");
+              }
+            }
+
+          }
+          quantitySelect.removeAttribute("disabled");
+          window.onbeforeunload = ""
+        })
+      }
+      {% if item.product.metafields.custom.creation_id.value %}
+        {%- capture urlPath -%}
+          {% case item.product.type %}
+            {% when "Card" %}
+            CARD_FRONT_ROUTE_SEGMENT
+            {% when "Magnet" %}
+            CARD_FRONT_ROUTE_SEGMENT
+            {% when "Calendar" %}
+            CALENDAR_FRONT_ROUTE_SEGMENT
+            {% when "Book" %}
+            ALBUM_FRONT_ROUTE_SEGMENT
+            {% else %}
+            OTHER_FRONT_ROUTE_SEGMENT
+          {% endcase %}
+        {%- endcapture -%}
+        const editButton = document.getElementById("item-{{ item.key }}-edit");
+        editButton.addEventListener("click", ()=>{
+          const locale = (Shopify.locale ?? "fr").toLowerCase();
+          window.location.href = OUTIL_PERSO_URL +{{ urlPath }}+"{{ item.product.metafields.custom.creation_id.value }}"+`?lng=${locale}`+(access_token? `&fromCart=true&token=${access_token}`: "");
+        })
+      {% endif %}
+    })
+  </script>
+  {% unless item.image %}
+    <script>
+    document.addEventListener("DOMContentLoaded", ()=>{
+      const onDOMContentLoaded = async () => {
+
+      let counter = 0;
+      const productImageCheck = async ()=>{
+        if(counter >= 10){
+          clearInterval(refreshIntervalId);
+        }
+        counter ++;
+        fetch(window.Shopify.routes.root + `products/{{ item.product.handle }}.js`).then(response => response.json())
+          .then(result => {
+        if(result && result.featured_image && result.featured_image != ""){
+          //replace the image
+          const imageElement = document.querySelector("#item-{{ item.key | replace:':',''}}-figure a img");
+          const spanElement = document.querySelector("#item-{{ item.key | replace:':',''}}-figure a span")
+          if(imageElement){
+            imageElement.onload= ()=>{ spanElement.remove(); imageElement.style.filter = '';};
+            imageElement.src= result.featured_image;
+            imageElement.srcset= result.featured_image;
+          }
+          clearInterval(refreshIntervalId);
+        }
+        }).catch(err => {console.log(err)});
+        
+      
+    };
+    const refreshIntervalId = setInterval(productImageCheck,1000);
+      };
+    onDOMContentLoaded();})
+    </script>
+  {% endunless %}
+{% endunless %}

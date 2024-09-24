@@ -1,0 +1,70 @@
+<script
+  type="application/json"
+  data-section-id="{{ section.id }}"
+  data-section-type="accordion"
+></script>
+
+{% schema %}
+{
+  "name": "t:sections.accordion.name",
+  "class": "accordion--section",
+  "settings": [
+    {
+      "id": "title",
+      "type": "text",
+      "label": "t:sections.accordion.title.label"
+    }
+  ],
+  "blocks":[
+    {
+      "type": "accordion-element",
+      "name": "element",
+      "settings": [
+        {
+          "id": "title",
+          "type": "text",
+          "label": "t:sections.accordion.accordion_element.title.label"
+        },
+        {
+          "id": "content",
+          "type": "richtext",
+          "label": "t:sections.accordion.accordion_element.content.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.accordion.presets.accordion.name",
+      "category": "t:sections.accordion.presets.accordion.category"
+    }
+  ]
+}
+{% endschema %}
+<div class="accordion-container">
+  <div class="accordion">
+    {% if section.settings.title != blank %}
+      <h2 class="accordion-title ps-3">{{ section.settings.title }}</h2>
+    {% endif %}
+    {% for accordion_item in section.blocks %}
+      {% if accordion_item.settings.title != blank %}
+        <div class="accordion-element">
+          <input type="checkbox" id="{{ accordion_item.settings.title }}">
+          <label class="accordion-label" for="{{ accordion_item.settings.title }}">
+            {{- accordion_item.settings.title -}}
+          </label>
+          <div class="accordion-content">
+            {{ accordion_item.settings.content }}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+<style>
+      .accordion-element input{
+    position: absolute;
+    opacity: 0;
+    z-index: -1;
+  }
+</style>

@@ -1,0 +1,30 @@
+{% if template contains 'product' and product %}
+  <script type="text/javascript">
+  
+    {% if product.type == 'Card' %}
+      {% assign starting_price = 0 %}
+        {% for p in product.variants.first.metafields.custom.prices.value.prices.value %}
+            {% assign starting_price = p.price.value %}
+            {% for option in product.variants.first.metafields.custom.options.value %}
+              {% for option_value in option.option_values.value %}
+                {% assign starting_price = starting_price | plus: option_value.price_increase.value %}
+                {% break %}
+              {% endfor %}
+            {% endfor %}
+          {% break %}
+            
+        {% endfor %}
+      {% else %}
+      {% assign starting_price = product.variants.first.price %}
+    {% endif %}
+    window.dataLayer.push({
+          event: "view_item",
+          item_id: "{{product.id}}",
+          item_name: "{{product.title}}",
+          price: "{{starting_price | money}}",
+          item_category: "{{product.collections.last.title}}",
+          item_category2: "{%- if product.metafields.custom.main_collection -%}{{ product.metafields.custom.main_collection.value.title }}{%- endif -%}",
+          quantity: 1,
+        });
+  </script>
+{% endif %}

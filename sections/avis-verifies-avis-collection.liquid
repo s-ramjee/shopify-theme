@@ -1,0 +1,76 @@
+{% schema %}
+  {
+    "name": "Avis vérifiés-collection",
+    "settings": [],
+    "presets": [
+      {
+        "name": "Avis vérifiés-collection"
+      }
+    ]
+  }
+{% endschema %}
+{% assign locale = request.locale.iso_code  %}
+{% case locale %} 
+  {% when "it" %}
+<script async charset="utf-8" src="https://widgets.rr.skeepers.io/product/c52cb6e8-561a-e4f4-9929-b40ee5268824/66ad950e-b249-4b88-97e4-19219687daef.js"></script>
+  {% when "de" %}
+    <script async charset="utf-8" src="https://widgets.rr.skeepers.io/product/a5913fc5-4e78-3e34-ede7-2e4cd18f6f19/3ecb3229-7df2-4f35-8f8c-8d533489586d.js"></script>
+  {% else %}
+    <script async charset="utf-8" src="https://widgets.rr.skeepers.io/product/335fee34-8fcd-3f84-b50b-dc57d8a25461/e9981eeb-b332-46e7-9201-921640940567.js"></script>
+{% endcase %}
+
+{% if collection %}
+<style>
+  #modal-{{ section.id }}{
+    height: 75%;
+    overflow: scroll;
+    padding: 20px 30px 20px 20px;
+    z-index: -1;
+  }
+  #modal-{{ section.id }}.is-visible{
+    z-index: 10000;
+  }
+  #div-{{ section.id }}{
+    text-align: center;
+  }
+</style>
+{% assign locale = request.locale.iso_code  %}
+{% assign skus = "" %}
+  {% if collection.metafields.custom.sku_avis %}
+    {% assign skus = collection.metafields.custom.sku_avis.value %}
+  {% else %}
+  {% for p in collection.products %}
+    {% unless forloop.first %}
+      {% assign skus = skus | append : "," %}
+    {% endunless %}
+    {% assign skus = skus | append : p.variants.first.sku %}
+    {% if p.variants.first.metafields.custom.old_sku %}
+      {% assign skus = skus | append : "," %}
+      {% assign skus = skus | append : p.variants.first.metafields.custom.old_sku.value %}
+    {% endif %}
+  {% endfor %}
+  {% endif %}
+  <div class="skeepers_product__stars" data-product-id="{{ skus }}" id="div-{{ section.id }}"></div>
+<div class="custom-modal-overlay" id="overlay-{{ section.id }}"></div>
+<div class="custom-modal" id="modal-{{ section.id }}">
+  {% assign full_url = request.host | append: request.path %}
+<div class="skeepers_product__reviews" data-product-id="{{ skus }}" data-locale="{{ locale }}" data-price="{{ collection.products.first.variants.first.price | money }}"  data-currency="EUR" data-name="{{ collection.title }}" data-url="{{ full_url }}" data-image-url="{{ collection.featured_image.src}}"></div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", ()=> {
+    document.getElementById('div-{{ section.id }}').addEventListener('click', function(event) {
+      event.preventDefault();
+      document.getElementById('overlay-{{ section.id }}').classList.add('is-visible');
+      document.getElementById('modal-{{ section.id }}').classList.add('is-visible');
+    });
+    
+    document.getElementById('overlay-{{ section.id }}').addEventListener('click', function() {
+      document.getElementById('overlay-{{ section.id }}').classList.remove('is-visible');
+      document.getElementById('modal-{{ section.id }}').classList.remove('is-visible');
+    });
+  })
+
+</script>
+
+{% endif %}

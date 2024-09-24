@@ -1,0 +1,24 @@
+{% schema %}
+  {
+    "name": "Avis vérifiés - marque",
+    "settings": [],
+    "presets": [
+      {
+        "name": "Avis vérifiés - marque"
+      }
+    ]
+  }
+{% endschema %}
+
+{% assign locale = request.locale.iso_code  %}
+{% case locale %} 
+  {% when "it" %}
+  <div id="5ef8887e-5021-4bc6-bc27-ba9e772f423e"></div>
+  <script async charset="utf-8" src="https://widgets.rr.skeepers.io/generated/c52cb6e8-561a-e4f4-9929-b40ee5268824/5ef8887e-5021-4bc6-bc27-ba9e772f423e.js"></script>
+  {% when "de" %}
+   <div id="e66a79a9-385a-4667-80b4-05af40a83960" class="avis-verifie-marque"></div>
+   <script async charset="utf-8" src="https://widgets.rr.skeepers.io/generated/a5913fc5-4e78-3e34-ede7-2e4cd18f6f19/e66a79a9-385a-4667-80b4-05af40a83960.js"></script>
+  {% else %}
+  <div id="d63683d9-2e63-41cf-b5f4-3907a8750f43" class="avis-verifie-marque"></div>
+  <script async charset="utf-8" src="https://widgets.rr.skeepers.io/generated/335fee34-8fcd-3f84-b50b-dc57d8a25461/d63683d9-2e63-41cf-b5f4-3907a8750f43.js"></script>
+{% endcase %}

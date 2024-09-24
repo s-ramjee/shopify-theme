@@ -1,0 +1,39 @@
+{% layout none %}
+
+    <script>
+    async function getCart(){
+      return await fetch('/' + 'cart.js').then(response => response.json())
+    }
+
+  async function addCartItems(items){
+    return fetch('/' + 'cart/add.js',{
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(items)
+    });
+  }
+      
+document.addEventListener("DOMContentLoaded", () => {
+  const onDomContentLoaded = async () => {
+      const variantsInCart = [{%- for item in cart.items -%}"{{ item.variant_id }}",{% endfor %}];
+      const urlParamsCart = new URLSearchParams(window.location.search);
+      const productsToAdd = urlParamsCart.get('productsToAdd');
+      const token = urlParamsCart.get('token_persoapp');
+      if(token){
+        localStorage.setItem("outil_access_token", token);
+      }
+       if (productsToAdd) {
+          if (variantsInCart.find((id) => {return id == productsToAdd}) === undefined) { 
+            await addCartItems({items:[{id: productsToAdd, quantity: 1}]});
+            window.location.href = "https://{{ request.host }}/cart"
+          }
+           else
+            window.location.href = "https://{{ request.host }}/cart"
+  
+       }
+    };
+  onDomContentLoaded();
+  })
+  </script>

@@ -1,0 +1,468 @@
+<h2 class="account-header mb-3">{{ 'customers.account.creations.header' | t }}</h2>
+<div class="creations-container" id="creations-container"></div>
+<nav class="pagination--container" aria-label="Pagination">
+{% comment %}
+  Les créations seront affichées ici 
+{% endcomment %}
+</nav>
+<script>
+  let totalElements;
+  const elementsPerPage = 10;
+  let totalPagesNumber;
+  let currentPage = 1;
+  
+  async function getCreations(){
+    //Call API
+    if(access_token){
+      return await fetch(OUTIL_PERSO_API + 'users/ongoing',{
+          method: "GET",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+          }
+        }
+      ).then(response => response.json()).catch(err => [])
+    }else{
+      return [];
+    }
+
+  }
+
+  async function getProductById(id){
+    return await fetch(`/search/suggest.json?q=id:${id}&resources[type]=product&limit=1`)
+		.then(response => response.json())//.then(response => response.resources.results.products[]
+  }
+
+  document.addEventListener("DOMContentLoaded",() => {
+    displayData();
+  })
+
+  async function displayData(){
+    const data = await getCreations();
+    if(data && data.length > 0){
+    totalElements = data.length;
+    totalPagesNumber = Math.ceil(totalElements/elementsPerPage) 
+    const lowerBound = (elementsPerPage * (currentPage-1) )
+    const upperBound = (elementsPerPage * currentPage )
+    const container = document.getElementById("creations-container")
+    const items =[];
+    const promises = [];
+    for(let i =0 ;i<data.length; i++){
+      const promise = createCreationItem(data[i],i+1).then(item => {
+        if (((i+1)<=lowerBound) || ((i+1)>upperBound)){
+          item.style.setProperty("display","none","important");
+        }
+        items.push(item);
+      });
+
+      promises.push(promise);
+    }
+    await Promise.all(promises);
+    items.forEach(i => {
+      container.appendChild(i);
+    })
+    const d = document.createElement("div");
+    d.innerHTML = `  <ul class="pagination--inner">
+    <li class="pagination--previous clickable" onclick="previous()">
+      <a
+        class="pagination--item"
+        aria-label="Go to previous page"
+      >
+        <span class="pagination--chevron-left" aria-hidden="true">
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            role="presentation"
+            width="8"
+            height="6"
+            viewBox="0 0 8 6"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon-chevron-down"
+          >
+            <path class="icon-chevron-down-left" d="M4 4.5L7 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"/>
+            <path class="icon-chevron-down-right" d="M4 4.5L1 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"/>
+          </svg>
+        </span>
+      </a>
+    </li>
+
+    <li class="pagination--next clickable" onclick="next()">
+      <a
+        class="pagination--item"
+        aria-label="Go to next page"
+      >
+        <span class="pagination--chevron-right" aria-hidden="true">
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            role="presentation"
+            width="8"
+            height="6"
+            viewBox="0 0 8 6"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon-chevron-down"
+          >
+            <path class="icon-chevron-down-left" d="M4 4.5L7 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"/>
+            <path class="icon-chevron-down-right" d="M4 4.5L1 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"/>
+          </svg>
+        </span>
+      </a>
+    </li>
+  </ul>`;
+    const paginationContainer = document.querySelector('.pagination--container');
+    paginationContainer.appendChild(d);
+    handleNavigation(1,totalPagesNumber)
+    }
+  }
+
+async function createCreationItem(creationData,index) {
+  //Get the original product
+  const shopifyId = creationData.shopifyID;
+  const idSplit = shopifyId?.split("/");
+  //const product = (await getProductById(idSplit?.pop())).resources.results.products[0];
+  var creationItem = document.createElement('div');
+  creationItem.className = 'd-flex w-100 creation-item';
+  creationItem.setAttribute("item-number",index)
+
+  var image = document.createElement('img');
+  image.src = creationData.photoSrc ?? "https://cdn.shopify.com/s/files/1/0799/1656/4777/files/placeholder-images-image_large_25f46883-1808-4b50-816f-58065234cee1.webp?v=1711122843";
+  image.style = 'width: auto; height:120px;';
+
+  var textContainer = document.createElement('div');
+  textContainer.className = 'd-flex flex-column mx-3 creation-info';
+  textContainer.style = 'flex-grow:5;';
+
+  var title = document.createElement('span');
+  title.className = 'creation-title';
+  title.textContent = creationData?.name ?? creationData?.id;
+
+  var type = document.createElement('span');
+  type.className = 'creation-collection mb-3 mt-2';
+  if(creationData.type){
+    type.textContent = creationData.type.charAt(0).toUpperCase() + creationData.type.slice(1).toLowerCase();
+  }
+  
+  var updatedAt = document.createElement('span');
+  updatedAt.className = "updated-at";
+  updatedAt.textContent = '{{"customers.account.creations.updated_at" | t}} ' + new Date(creationData.updatedAt).toLocaleDateString((Shopify.locale ?? "fr"), { year:"numeric", month:"long", day:"numeric"});
+
+  textContainer.appendChild(title);
+  textContainer.appendChild(type);
+  textContainer.appendChild(updatedAt);
+
+  var actionsContainer = document.createElement('div');
+  actionsContainer.style = 'flex-grow:1;';
+
+  var innerActionsContainer = document.createElement('div');
+  innerActionsContainer.className = 'd-flex flex-column';
+
+  var actionButtons = document.createElement('div');
+  actionButtons.className = 'd-flex justify-content-evenly mb-3';
+
+  var duplicateButton = document.createElement('span');
+  duplicateButton.className = "duplicate-text"
+  duplicateButton.textContent = '{{ 'customers.account.creations.dupliquer' | t }}';
+  
+  var deleteButton = document.createElement('span');
+  deleteButton.className = "delete-text"
+  deleteButton.textContent = '{{ 'customers.account.creations.supprimer' | t }}';
+  
+  //actionButtons.appendChild(duplicateButton);
+  //TODO: readd later
+  //actionButtons.appendChild(deleteButton);
+
+  var modifyButton = document.createElement('button');
+  modifyButton.className = 'button-primary modify-creation-button';
+  
+  var modifyButtonText = document.createElement('span');
+  modifyButtonText.className = 'atc-button--text';
+  modifyButtonText.textContent = '{{ 'customers.account.creations.modifier' | t }}';
+
+  modifyButton.addEventListener("click", ()=> {
+    const locale = (Shopify.locale ?? "fr").toLowerCase();
+    window.location.href = OUTIL_PERSO_URL.substring(0,OUTIL_PERSO_URL.length-1) + creationData.modifyURL +`?lng=${locale}`+(access_token? `&token=${access_token}`: "")})
+
+  modifyButton.appendChild(modifyButtonText);
+
+  innerActionsContainer.appendChild(actionButtons);
+  innerActionsContainer.appendChild(modifyButton);
+
+  actionsContainer.appendChild(innerActionsContainer);
+
+  creationItem.appendChild(image);
+  creationItem.appendChild(textContainer);
+  creationItem.appendChild(actionsContainer);
+
+  if(accessToken){
+     duplicateButton.addEventListener("click", async ()=>{
+    /*deleteButton.setAttribute("disabled", true);
+    modifyButton.setAttribute("disabled", true);
+    duplicateButton.setAttribute("disabled", true);
+    let routeSegment;
+    switch(creationData?.type){
+      case "CARTE":
+        routeSegment = CARD_API_ROUTE_SEGMENT
+        break;
+      case "ALBUM":
+        routeSegment = ALBUM_API_ROUTE_SEGMENT
+        break;
+      case "CALENDRIER":
+        routeSegment = CALENDAR_API_ROUTE_SEGMENT
+        break;
+      default:
+        routeSegment= OTHER_API_ROUTE_SEGMENT;
+    }
+      await fetch(OUTIL_PERSO_API+routeSegment+"duplicate/"+creationData?.id,
+                  {
+                    method: "POST",
+                    headers: {
+                      'Authorization': `Bearer ${access_token}`
+                    }
+                  }).then(data => {
+          if(data.status < 300 && data.status >=200){
+            handleElementDuplication(creationData, data.data.id);
+          }
+        }).catch(err => {console.log(err)}).finally(()=> 
+          {
+            deleteButton.removeAttribute("disabled");
+            modifyButton.removeAttribute("disabled");
+            duplicateButton.removeAttribute("disabled");
+          })*/
+    })
+
+
+    deleteButton.addEventListener("click", async ()=>{
+    deleteButton.setAttribute("disabled", true);
+    modifyButton.setAttribute("disabled", true);
+    duplicateButton.setAttribute("disabled", true);
+    let routeSegment;
+    switch(creationData?.type){
+      case "CARTE":
+        routeSegment = CARD_API_ROUTE_SEGMENT
+        break;
+      case "ALBUM":
+        routeSegment = ALBUM_API_ROUTE_SEGMENT
+        break;
+      case "CALENDRIER":
+        routeSegment = CALENDAR_API_ROUTE_SEGMENT
+        break;
+      default:
+        routeSegment= OTHER_API_ROUTE_SEGMENT;
+    }
+      await fetch(OUTIL_PERSO_API+routeSegment+creationData?.id,
+                  {
+                    method: "DELETE",
+                    headers: {
+                      'Authorization': `Bearer ${access_token}`
+                    }
+                  }).then(data => {
+        if(data.status < 300 && data.status >=200){
+          creationItem.remove();
+          handleElementDeletion(creationItem.getAttribute("item-number"));
+        }
+      }).catch(err => {console.log(err)}).finally(()=> 
+        {
+          deleteButton.removeAttribute("disabled");
+          modifyButton.removeAttribute("disabled");
+          duplicateButton.removeAttribute("disabled");
+        })
+    })
+  }
+ 
+
+  return creationItem;
+}
+  
+  function handlePageChange(pageNumber){
+    currentPage = Math.min(pageNumber,totalPagesNumber);
+    const lowerBound = (elementsPerPage * (currentPage-1) )
+    const upperBound = (elementsPerPage * currentPage )
+    const items = document.querySelectorAll(".creation-item");
+    items.forEach(item => {
+      if((item.getAttribute("item-number") > lowerBound) && (item.getAttribute("item-number")<=upperBound)) 
+        item.style.display = "";  
+      else
+        item.style.setProperty("display","none","important");
+    })
+    handleNavigation(currentPage,totalPagesNumber);
+  }
+
+  function goTo(pageNumber){
+    if(pageNumber >=1 && pageNumber <= totalPagesNumber){
+    handlePageChange(pageNumber);
+    }
+  }
+
+  function next(){
+    if(currentPage < totalPagesNumber){
+       handlePageChange(currentPage +1);
+    }
+  }
+
+  function previous(){
+    if (currentPage > 1){
+      handlePageChange(currentPage -1);
+    }
+  }
+
+  function handleNavigation(currentPage, lastPage){
+    const paginationElement = document.querySelector(".pagination--inner");
+    const items = document.querySelectorAll(".pagination-element");
+    items.forEach(item=>{item.remove()});
+    const navigationLeft= document.querySelector(".pagination--previous")
+    const navigationRight= document.querySelector(".pagination--next")
+    
+    if(currentPage == lastPage){
+      navigationRight.style.setProperty("display","none","important");
+    }
+    else{
+      navigationRight.style.display = "";
+    }
+    if(currentPage == 1){
+      navigationLeft.style.setProperty("display","none","important");
+    }
+    else{
+      navigationLeft.style.display = "";
+    }
+    //Si on a plus de 10 pages, on affiche 1 ... x-1 x  x+1...  n
+    if(lastPage > 10){
+      if(currentPage > 1){
+        paginationElement.insertBefore(createNavigationItem(1, false),navigationRight)
+      }
+      if(currentPage > 3){
+        paginationElement.insertBefore(createNavigationEllipsis(),navigationRight);
+      }
+      if(currentPage > 2){
+        paginationElement.insertBefore(createNavigationItem(currentPage -1, false),navigationRight)
+      }
+      paginationElement.insertBefore(createNavigationItem(currentPage, true),navigationRight)
+      if(currentPage < lastPage - 1){
+        paginationElement.insertBefore(createNavigationItem(currentPage+1, false),navigationRight)
+      }
+      if(currentPage < lastPage - 2){
+        paginationElement.insertBefore(createNavigationEllipsis(),navigationRight);
+      }
+      if(currentPage < lastPage){
+        paginationElement.insertBefore(createNavigationItem(lastPage, false),navigationRight)
+      }
+    }
+    //Si on a moins de 10 pages, on affiche tous les boutons
+    else{
+      for(let i= 1; i<=lastPage; i++){
+        paginationElement.insertBefore(createNavigationItem(i,currentPage == i),navigationRight)
+      }
+    }
+    
+  }
+
+  function createNavigationItem(pageNumber, active){
+    const li = document.createElement("li");
+    li.className="pagination-element clickable" +(active? " pagination--active" : "");
+    li.setAttribute("aria-label","Page "+pageNumber);
+    li.setAttribute("page-number",pageNumber)
+    li.addEventListener("click",()=>{goTo(pageNumber)});
+    if(active){
+      li.setAttribute("aria-current",true);
+    }
+    const span = document.createElement("span");
+    span.className = "pagination--item";
+    span.textContent = pageNumber;
+    li.appendChild(span);
+    return li;
+  }
+  
+  function createNavigationEllipsis(){
+    const li = document.createElement("li");
+    li.className="pagination-element pagination--ellipsis";
+    const span = document.createElement("span");
+    span.className = "pagination--item";
+    span.textContent = " ... ";
+    li.appendChild(span);
+    return li;
+  }
+
+  function handleElementDeletion(index){
+    const elements = document.querySelectorAll(".creations-container > div");
+    totalElements--;
+    elements.forEach(element => {
+      const elementIndex = element.getAttribute("item-number");
+      if(elementIndex && elementIndex > index){
+        element.setAttribute("item-number",elementIndex -1);
+        //if element is in current page make it visible
+        const lowerBound = (elementsPerPage * (currentPage-1) )
+        const upperBound = (elementsPerPage * currentPage )
+        if (((elementIndex -1)>lowerBound) && ((elementIndex -1)<=upperBound)){
+          element.style.setProperty("display","flex","important");
+        }
+      }
+    })
+    if(totalElements <= ((totalPagesNumber-1) * elementsPerPage)){
+      //Remove the last page if > 1 else hide navigation
+      if(totalPagesNumber > 1){
+        totalPagesNumber --
+        handleNavigation(currentPage, totalPagesNumber)
+      }else{
+        const pagination = document.querySelector("nav.pagination--container");
+        if(pagination){
+          pagination.style.setProperty("display","none","important");
+        }
+      }
+    }
+  }
+
+  function handleElementDuplication(creationData){
+    totalElements++;
+    if(totalElements > (totalPagesNumber * elementsPerPage)){
+      totalPagesNumber++;
+      if(totalPagesNumber > 2){
+        handleNavigation(currentPage,totalPagesNumber)
+      }
+      else{
+        const pagination = document.querySelector("nav.pagination--container");
+        if(pagination){
+          pagination.style.setProperty("display","block","important");
+          currentPage = totalPagesNumber;
+          handleNavigation(currentPage, totalPagesNumber)
+        }
+      }
+      
+    }
+  }
+</script>
+<style>
+  .creations-container{
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    flex-direction: column;
+  }
+  .creation-item{
+    padding: 1rem;
+    background-color: #F9FAFB;
+    flex-wrap: wrap;
+  }
+  .creation-item .creation-title{
+    font-family: "DM Sans";
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .creation-item .creation-collection{
+    font-family: "Work Sans";
+    font-weight: 400;
+    font-size: 14px;
+    color: #A7A7A7
+  }
+  .duplicate-text, .delete-text{
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .duplicate-text:disabled, .delete-text:disabled{
+    cursor: not-allowed;
+    color: #6a6a6a
+  }
+  .modify-creation-button:disabled{
+    cursor: not-allowed
+  }
+</style>

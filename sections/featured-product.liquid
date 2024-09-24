@@ -1,0 +1,24 @@
+{% comment %} featured-products.liquid {% endcomment %}
+<section class="featured-products-section">
+  <h2 class="section-title">{{ section.settings.title }}</h2>
+  <div class="product-grid">
+    {% for product in section.settings.featured_products %}
+      <div class="product-item">
+        <a href="{{ product.url }}" class="product-link">
+          <img src="{{ product.featured_image.src | img_url: 'medium' }}" alt="{{ product.featured_image.alt }}">
+          <h3 class="product-title">{{ product.title }}</h3>
+          <p class="product-price">{{ product.price | money }}</p>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% if product %}
+<script class="gpo-featured-product">
+  window.GPOConfigs = window.GPOConfigs || {}
+  window.GPOConfigs.featuredProduct = {{ product | json }} || null
+  window.GPOConfigs.featuredProduct.collections = {{ product.collections | map: 'id' | json }}
+</script>
+{% endif %}
+
+<!-- GPO installed -->

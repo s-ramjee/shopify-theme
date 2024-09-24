@@ -1,0 +1,515 @@
+<script>
+  
+  
+  
+  
+  
+  
+const nombres = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+const caracteresSpeciaux = [
+  '!',
+  '@',
+  '#',
+  '$',
+  '%',
+  '^',
+  '&',
+  '*',
+  '(',
+  ')',
+  '-',
+  '_',
+  '+',
+  '=',
+  '{',
+  '}',
+  '[',
+  ']',
+  '|',
+  '\\',
+  ':',
+  ';',
+  '"',
+  "'",
+  '<',
+  '>',
+  ',',
+  '.',
+  '?',
+  '/',
+];
+  
+  
+  document.addEventListener('invalid', (function(){
+  return function(e) {
+    e.preventDefault();
+  };
+  })(), true);
+    function showError(divId, errorText,labelId,type="error"){
+      const label = document.getElementById(divId+"-label"+(labelId? ("-"+labelId): ""));
+      const parsedErrorText = (new DOMParser().parseFromString(errorText, 'text/html')).documentElement.textContent;
+      if(label == null || label.innerHTML != parsedErrorText){
+        const container = document.getElementById(divId);
+        const errorLabel = document.createElement("label");
+        errorLabel.className = type+"-message";
+        errorLabel.innerHTML = parsedErrorText;
+        errorLabel.id = divId+"-label"+(labelId? ("-"+labelId): "");
+        container.appendChild(errorLabel);
+      }
+    }
+  function hideErrors(divId){
+    if(divId){
+
+        const r = document.querySelectorAll("#"+divId+" label.error-message");
+          r.forEach((element)=>{
+          element.remove();
+        }
+      );
+    }
+  }
+  function hideError(divId,labelId){
+    if(divId){
+      const element = document.getElementById(`${divId}-label${labelId? ("-"+labelId): ""}`);
+      if(element)
+        element.remove();
+    }
+  }
+  function hideAllErrors(){
+    document.querySelectorAll("label.error-message").forEach((element) => {
+      element.remove();
+    }
+  );
+  }
+
+  function checkPasswords(){
+        const password = document.getElementById('register_password').value;
+        const passwordConfirmation = document.getElementById('repeat_password').value;
+
+        if (password !== passwordConfirmation){
+          showError('password-confirmation-div', "{{'customers.forms.error_messages.password_confirmation_mismatch' | t}}", "passMismatch");
+        }
+        else{
+          hideErrors('password-confirmation-div');
+        }
+  }
+
+  function checkEmail(){
+    const email = document.getElementById("register_email");
+    if(!email.value || email.value == ""){
+      showError('email-div','{{ "customers.forms.error_messages.email_required" | t }}',"emailRequired");
+    }
+  }
+
+     document.addEventListener('DOMContentLoaded', (event) => {
+
+        document.getElementById('create_customer').addEventListener('submit', function(e) {
+        hideAllErrors();
+          const f = document.getElementById('create_customer')
+          const onsub= f.onsubmit;
+          f.onsubmit = "";
+        const password = document.getElementById('register_password').value;
+        const passwordConfirmation = document.getElementById('repeat_password').value;
+        let willSubmit = true;
+
+        if (password !== passwordConfirmation) {
+          e.preventDefault();
+          showError('password-confirmation-div', '{{"customers.forms.error_messages.password_confirmation_mismatch" | t}}',"passMismatch");
+        }
+
+        const agree = document.getElementById("accept_conditions").checked;
+        if(!agree){
+          e.preventDefault();
+          showError('agree-div', '{{ "customers.forms.error_messages.must_agree" | t }}',"agree");
+        }
+        checkEmail();
+
+        const email = document.getElementById("register_email").value;
+        localStorage.setItem("creds",JSON.stringify({"email": email, "password": password, "originWebSite": "PC"}))
+          
+        f.onsubmit = onsub;
+        setTimeout(()=>{console.log("register timeout")},10000)
+      });
+  })
+
+  function handlePasswordChange(passwordId){
+    const passwordDiv = document.getElementById(passwordId);
+    const passwordInput = document.querySelector(`#${passwordId} input`)
+    const warnings = [];
+    if(passwordInput.value){
+      hideError(passwordId,"passRequired")
+      if(passwordInput.value.length < 8){
+        showError(passwordId,'{{ "customers.forms.error_messages.password_min_length" | t | escape  }}',"passMinLength");
+        passwordInput.style.color = "#d90000"
+      }
+      else{
+        hideError(passwordId,"passMinLength");
+        passwordInput.style.color = "#ffbd08"
+      }
+      if(passwordInput.value.length < 12){
+        warnings.push("{{"customers.forms.warnings.password_length" | t}}");
+      }
+      if(passwordInput.value == passwordInput.value.toLocaleUpperCase()){
+        warnings.push("{{"customers.forms.warnings.lowercase"| t }}");
+      }
+      if(passwordInput.value == passwordInput.value.toLocaleLowerCase()){
+        warnings.push("{{"customers.forms.warnings.uppercase"| t}}");
+      }
+      if(!nombres.some((v) => passwordInput.value.includes(v))){
+        warnings.push("{{"customers.forms.warnings.number" | t}}");
+      }
+      if(!caracteresSpeciaux.some((v) => passwordInput.value.includes(v))){
+        warnings.push("{{"customers.forms.warnings.special_character" | t}}");
+      }
+      if(warnings.length > 0){
+        const warningMessage = "{{"customers.forms.warnings.message_start" | t}} " + warnings.join(', ');
+        const warningLabel = document.querySelector(`#${passwordId} label.warning-message`);
+        if(!warningLabel)
+          showError(passwordId, warningMessage,"passWarning",type="warning");
+        else
+          warningLabel.innerText = warningMessage;
+      }
+      else{
+        passwordInput.style.color = "#87ab8a"
+        const warningLabel = document.querySelector(`#${passwordId} label.warning-message`);
+        if(warningLabel){
+          warningLabel.remove();
+        }
+      }
+    }
+    else{
+      showError(passwordId,'{{ "customers.forms.error_messages.password_required" | t | escape }}',"passRequired")
+    }
+  }
+
+  function handlePasswordInvalid(passwordId){
+    const passwordInput = document.querySelector(`#${passwordId} input`)
+    if(!passwordInput.value || passwordInput.value.length < 1)
+      showError('password-div','{{ "customers.forms.error_messages.password_required" | t | escape }}',"passRequired")
+    else if (passwordInput.value.length > 0 && passwordInput.value.length < 8)
+      showError('password-div','{{ "customers.forms.error_messages.password_min_length" | t | escape  }}',"passMinLength")
+  }
+
+  function togglePasswordView(divId){
+  const togglePassword = document.querySelector('#'+divId+' i.password-icon');
+  const password = document.querySelector('#'+divId+' input');
+  const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+  password.setAttribute('type', type);
+  togglePassword.classList.toggle('fa-eye-slash');
+  togglePassword.classList.toggle('fa-eye');
+  }
+
+
+
+
+
+
+
+</script>
+<section
+  class="account-page account-page-register {% unless section.settings.image %} justify-content-center {% endunless %}"
+  data-template-account
+>
+  {% if section.settings.image %}
+    <div class="register-image">
+      {% assign image = section.settings.image %}
+      {% assign alt = section.settings.image.alt | escape %}
+      {% render 'rimg', img: image, alt: alt %}
+    </div>
+  {% endif %}
+
+  <div class="register-form d-flex flex-column w-auto align-items-center">
+    <header class="account-page-masthead {% if section.settings.image %}align-self-start {% else %} align-self-center {% endif %} my-5 mb-3 mx-0 ps-3">
+      <h1 class="account-page-title">
+        {{ 'customers.register.title' | t }}
+      </h1>
+    </header>
+
+    <article class="account-page-content w-100 mt-3">
+      {% form 'create_customer' %}
+        {% assign has_message = false %}
+
+        {% if form.errors != blank %}
+          {% assign has_message = true %}
+          {% assign message_type = 'error' %}
+        {% endif %}
+
+        {% if form.posted_successfully? %}
+          {% assign has_message = true %}
+          {% assign message_type = 'success' %}
+        {% endif %}
+
+        {% if has_message %}
+          <div class="account-message form-message message--{{ message_type }}">
+            {% case message_type %}
+              {% when 'success' %}
+                <p>
+                  {{ 'customers.register.success' | t }}
+                </p>
+              {% when 'error' %}
+                {{ form.errors | default_errors }}
+            {% endcase %}
+          </div>
+        {% endif %}
+
+        <div class="form-fields-columns">
+          <div class="d-flex justify-content-between w-100">
+            <div class="form-field form-field--half mx-0" id="name-div">
+              <div style="position:relative">
+                <input
+                  type="text"
+                  class="form-field-input form-field-text"
+                  id="register_first_name"
+                  name="customer[first_name]"
+                  autocapitalize="words"
+                  autofocus
+                  {% if form.first_name %}
+                    value="{{ form.first_name }}"
+                  {% endif %}
+                  required
+                  oninvalid="showError('name-div','{{ "customers.forms.error_messages.first_name_required" | t }}','nameRequired')"
+                  onchange="hideErrors('name-div')"
+                >
+
+                <label
+                  class="form-field-title"
+                  for="register_first_name"
+                >
+                  {{ 'customers.forms.first_name' | t | escape }} *
+                </label>
+              </div>
+            </div>
+
+            <div class="form-field form-field--half mx-0" id="last-name-div">
+              <div style="position: relative">
+                <input
+                  type="text"
+                  class="form-field-input form-field-text"
+                  id="register_last_name"
+                  name="customer[last_name]"
+                  autocapitalize="words"
+                  {% if form.last_name %}
+                    value="{{ form.last_name }}"
+                  {% endif %}
+                  required
+                  oninvalid="showError('last-name-div','{{ "customers.forms.error_messages.last_name_required" | t }}','lastNameRequired')"
+                  onchange="hideErrors('last-name-div')"
+                >
+
+                <label
+                  class="form-field-title"
+                  for="register_last_name"
+                >
+                  {{ 'customers.forms.last_name' | t | escape }} *
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field w-100 mx-0" id="email-div">
+            <div style="position:relative">
+              <input
+                type="email"
+                class="form-field-input form-field-text {% if form.errors contains 'email' %}form-field-error{% endif %}"
+                id="register_email"
+                name="customer[email]"
+                autocorrect="off"
+                autocapitalize="off"
+                {% if form.email %}
+                  value="{{ form.email }}"
+                {% endif %}
+                required
+                oninvalid="showError('email-div','{{ "customers.forms.error_messages.email_required" | t | escape }}','emailRequired')"
+                onchange="hideErrors('email-div')"
+              >
+
+              <label
+                class="form-field-title"
+                for="register_email"
+              >
+                {{ 'customers.forms.email' | t }} *
+              </label>
+            </div>
+          </div>
+
+          <div class="form-field w-100 mx-0" id="password-div">
+            <div style="position:relative">
+              <input
+                type="password"
+                class="form-field-input form-field-text {% if form.errors contains 'password' %}form-field-error{% endif %}"
+                id="register_password"
+                name="customer[password]"
+                required
+                minlength="8"
+                oninvalid="handlePasswordInvalid('password-div')"
+                onchange="hideErrors('password-div')"
+                onkeyup="handlePasswordChange('password-div')"
+              >
+
+              <label
+                class="form-field-title"
+                for="register_password"
+              >
+                {{ 'customers.forms.password' | t }} *
+              </label>
+              <i class="far fa-eye password-icon" onclick="togglePasswordView('password-div')"></i>
+            </div>
+          </div>
+
+          <div class="form-field w-100 mx-0" id="password-confirmation-div">
+            <div style="position:relative">
+              <input
+                type="password"
+                class="form-field-input form-field-text {% if form.errors contains 'repeat_password' %}form-field-error{% endif %}"
+                id="repeat_password"
+                name="customer[repeat_password]"
+                required
+                oninvalid="showError('password-confirmation-div','{{ "customers.forms.error_messages.password_confirmation_required" | t | escape }}','passConfirmationRequired')"
+                onchange="hideErrors('password-confirmation-div')"
+              >
+
+              <label
+                class="form-field-title"
+                for="repeat_password"
+              >
+                {{ 'customers.forms.repeat_password' | t }} *
+              </label>
+              <i class="far fa-eye password-icon" onclick="togglePasswordView('password-confirmation-div')"></i>
+            </div>
+          </div>
+
+          <div class="form-field w-100 mx-0" id="agree-div">
+            <div>
+              <input
+                type="checkbox"
+                class="planet-cards-check"
+                id="accept_conditions"
+                name="accept_conditions"
+                onclick="(e)=> {if (e.target.checked) hideErrors(agree-div);}"
+              >
+
+              <label
+                class="checkbox-label planet-cards-check"
+                for="accept_conditions"
+              >
+                {{ 'customers.forms.i_agree' | t }}
+                <a href="{{ section.settings.general_conditions_link }}" id="general_conditions_link">
+                  {{ 'customers.forms.general_conditions' | t | escape }}
+                </a>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-field w-100 mx-0">
+            <input
+              type="checkbox"
+              class="planet-cards-check"
+              id="marketing_email_consent"
+              name="customer[accepts_marketing]"
+            >
+
+            <label
+              class="checkbox-label planet-cards-check"
+              for="marketing_email_consent"
+            >
+              {{ 'customers.forms.marketing_email_consent' | t }}
+            </label>
+          </div>
+
+          <button class="button-primary form-action--submit w-100 py-3" type="submit">
+            {{ 'customers.register.submit' | t }}
+          </button>
+
+          <div class="form-action-row--helper mt-4 w-100 ms-0">
+            <span class="form-action-row--helper-item text-center login-text">
+              {{ 'customers.register.returning_customer' | t | customer_login_link }}
+            </span>
+          </div>
+        </div>
+      <input type="hidden" id="customer_tags" name="customer[tags]" value="{{ request.locale.iso_code }}"/>
+      {% endform %}
+    </article>
+  </div>
+</section>
+<style>
+      @media screen and (max-width: 720px) {
+      .register-image{
+        display: none
+      }
+        .register-form{
+          width:100%
+        }
+    }
+      @media (min-width: 720px) {
+        .register-image{
+          width: 50%
+        }
+        .register-image img{
+          width: 100%
+        }
+        .register-form{
+          width:50%;
+          padding-right: 3rem;
+          padding-left: 3rem;
+        }
+      }
+    .account-page-register{
+      display:flex;
+    }
+    .login-text{
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .form-field--half{
+      width: calc(50% - 10px) !important;
+    }
+  #general_conditions_link{
+    text-decoration: underline;
+    font-weight: 600;
+  }
+  .error-message{
+    color: #d90000;
+    text-overflow: clip;
+    overflow: hidden;
+    max-width: inherit;
+    display: block;
+    margin-top: 0.25rem;
+  }
+  .warning-message{
+    color: #ffbd08;
+    text-overflow: clip;
+    overflow: hidden;
+    max-width: inherit;
+    display: block;
+    margin-top: 0.25rem;
+  }
+  .password-icon{
+    position: absolute;
+    right: 2%;
+    top: 30%;
+    font-size: 1.25rem;
+    color: gray;
+    cursor: pointer;
+  }
+</style>
+{% schema %}
+{
+  "name": "t:sections.register.name",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:sections.register.header_1.content"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.register.image.label"
+    },
+    {
+      "type": "url",
+      "id": "general_conditions_link",
+      "label": "t:sections.register.link.label"
+    }
+  ]
+}
+{% endschema %}

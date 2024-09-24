@@ -1,0 +1,91 @@
+<nav class="customer-account-navigation">
+  <ol>
+    <li
+      class="navigation-item"
+    >
+      <a
+        class="d-flex align-items-center"
+        href="{{ routes.account_url }}"
+      >
+        {% render 'icon-library', id:'icon-account' , icon_class:'svg-account-icon' %}
+        {{ 'customers.account.profile.header' | t }}
+      </a>
+    </li>
+    <li
+      class="navigation-item"
+    >
+      <a
+        class="d-flex align-items-center"
+        href="{{ routes.account_addresses_url }}"
+      >
+        {% render 'icon-library', id:'icon-home-1' , icon_class:'svg-account-icon'  %}
+        {{ 'customers.addresses.title' | t }}
+      </a>
+    </li>
+    <li
+      class="navigation-item"
+    >
+      <a
+        class="d-flex align-items-center"
+        href="{{ routes.account_url }}?view=orders"
+      >
+        {% render 'icon-library', id:'icon-cart-account' , icon_class:'svg-account-icon'  %}
+        {{ 'customers.account.orders.header' | t }}
+      </a>
+    </li>
+    <li
+      class="navigation-item"
+    >
+      <a
+        class="d-flex align-items-center"
+        href="{{ routes.account_url }}?view=creations"
+      >
+        {% render 'icon-library', id:'icon-creations-sauvegardees' , icon_class:'svg-account-icon'  %}
+        {{ 'customers.account.creations.header' | t }}
+      </a>
+    </li>
+    {% comment %}
+    <li
+      class="navigation-item"
+    >
+      <a
+        class="d-flex align-items-center"
+        href="{{ routes.account_url }}?view=album"
+      >
+        {% render 'icon-library', id:'icon-folder' , icon_class:'svg-account-icon'  %}
+        {{ 'customers.account.album.header' | t }}
+      </a>
+    </li>
+    {% endcomment %}
+    <li
+      class="navigation-item"
+    >
+      <a
+        class="d-flex align-items-center"
+        href="{{ routes.account_url }}?view=wishlist"
+      >
+        {% render 'icon-library', id:'icon-heart-outline' , icon_class:'svg-account-icon'  %}
+        {{ 'customers.account.wishlist.header' | t }}
+      </a>
+    </li>
+    <li class="navigation-item">
+      <a onclick="logout()" style="width: fit-content; padding:0; margin:1rem;">
+        <button class="product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded">
+          <span class="atc-button--text">
+            {{ 'header.account.logout' | t }}
+          </span>
+        </button>
+      </a>
+    </li>
+  </ol>
+</nav>
+<script>
+      $( document ).ready(function() {
+    $("a[href='"+location.pathname+location.search +"'").addClass("active")
+  });
+
+  function logout(){
+    localStorage.removeItem("outil_access_token");
+    window.location.href = "/account/logout";
+  }
+</script>

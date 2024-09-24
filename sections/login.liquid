@@ -1,0 +1,345 @@
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+
+     const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#customer_password');
+
+    togglePassword.addEventListener('click', function (e) {
+      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+      password.setAttribute('type', type);
+      this.classList.toggle('fa-eye-slash');
+      this.classList.toggle('fa-eye');
+  });
+
+    })
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+    const form = document.querySelector('#customer_login');
+    form.addEventListener('submit', (event) => {
+      event.preventDefault(); 
+      event.stopPropagation();  
+      event.stopImmediatePropagation();
+
+      const password = document.querySelector('#customer_password').value;
+      const email = document.querySelector('#customer_email').value;
+
+      fetch(OUTIL_PERSO_API + 'users/customer-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customer: {
+            email,
+            password
+          },
+          market: window.location.hostname.split(".").pop()
+        })
+      }).then((value) => {
+        return value.json();
+      }).then((data) => {
+        if(data.statusCode === 401) {
+          const output = document.querySelector('#customer_login_error_box');
+          output.innerHTML = `
+            <div class="account-message message--error">
+              <div class="errors">
+                <ul>
+                  <li>E-mail ou mot de passe incorrect.</li>
+                </ul>
+              </div>
+            </div>
+          `;
+        } else {
+          fetch(OUTIL_PERSO_API + "auth/login", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password, originWebSite: "PC" }),
+          })
+            .then((response) => response.json())
+            .then((response) => {
+              if (response["access_token"]) {
+                localStorage.setItem("outil_access_token", response["access_token"]);
+                localStorage.setItem("just_logged_in", "true");
+              }
+
+              window.location = data.url;
+            })
+            .catch((err) => {
+              window.location = data.url;
+            })
+        }
+      });
+
+      return false;
+    });
+  });
+</script>
+
+<section
+  class="account-page account-page-login {% unless section.settings.image %} justify-content-center {% endunless %}"
+  data-template-account
+  data-template-account-login
+>
+  {% if section.settings.image %}
+    <div class="login-image">
+      {% assign image = section.settings.image %}
+      {% assign alt = section.settings.image.alt | escape %}
+      {% render 'rimg', img: image, alt: alt %}
+    </div>
+  {% endif %}
+  <div class="login-form d-flex flex-column w-auto align-items-center justify-content-center">
+    <header class="account-page-masthead {% if section.settings.image %}align-self-start {% else %} align-self-center {% endif %} my-5 mb-3 mx-0 ps-4">
+      <h1 class="account-page-title">
+        {{ 'customers.login.title' | t }}
+      </h1>
+    </header>
+
+    <article class="account-page-content w-100 mt-3 mx-0">
+      <div class="account-login visible" data-account-login-main>
+        <form accept-charset="UTF-8" id="customer_login">
+          <div id="customer_login_error_box"></div>
+          
+          <input type="hidden" name="return_to" value="/">
+
+          <div class="form-field w-100 mx-0">
+            <input
+              class="form-field-input form-field-text"
+              id="customer_email"
+              name="customer[email]"
+              type="text"
+              autocorrect="off"
+              autocapitalize="off"
+            >
+            <label
+              class="form-field-title"
+              for="customer_email"
+            >
+              {{ 'customers.forms.email' | t }}
+            </label>
+          </div>
+
+          <div class="form-field form-field--account-password w-100 mx-0">
+            <input
+              class="form-field-input form-field-text"
+              id="customer_password"
+              name="customer[password]"
+              type="password"
+            >
+            <label
+              class="form-field-title"
+              for="customer_password"
+            >
+              {{ 'customers.forms.password' | t }}
+            </label>
+            <i class="far fa-eye password-icon" id="togglePassword"></i>
+          </div>
+          <span class="form-action-row--helper-item text-start mb-4">
+            <a href="#customer_recovery" data-login-toggle>
+              {{ 'customers.login.forgot_password' | t }}
+            </a>
+          </span>
+          <div class="form-action-row">
+            <button class="button-primary w-100 py-3" type="submit">
+              {{ 'customers.login.sign_in' | t }}
+            </button>
+          </div>
+          <div class="form-action-row">
+            <div class="form-action-row--helper w-100 mx-0">
+              <span class="form-action-row--helper-item text-center">
+                {{ 'customers.new_customer.title' | t }}
+                {{ 'customers.register.title' | t | customer_register_link }}
+              </span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div
+        class="account-recovery"
+        id="customer_recovery"
+        data-account-login-recovery
+      >
+        {% form 'recover_customer_password' %}
+          <h2 class="account-page-subtitle">
+            {{ 'customers.recover_password.title' | t }}
+          </h2>
+
+          <p>{{ 'customers.recover_password.subtitle' | t }}</p>
+
+          {% assign has_message = false %}
+
+          {% if form.errors != blank %}
+            {% assign has_message = true %}
+            {% assign message_type = 'error' %}
+          {% endif %}
+
+          {% if form.posted_successfully? %}
+            {% assign has_message = true %}
+            {% assign message_type = 'success' %}
+          {% endif %}
+
+          {% if has_message %}
+            <div class="account-message message--{{ message_type }}" data-recovery-has-message>
+              {% case message_type %}
+                {% when 'success' %}
+                  <p>
+                    {{ 'customers.recover_password.success' | t }}
+                  </p>
+                {% when 'error' %}
+                  {{ form.errors | default_errors }}
+              {% endcase %}
+            </div>
+          {% endif %}
+
+          <div class="form-field">
+            <input
+              class="form-field-input form-field-text"
+              id="customer_recovery_email"
+              name="email"
+              type="text"
+              autocorrect="off"
+              autocapitalize="off"
+            >
+            <label
+              class="form-field-title"
+              for="customer_recovery_email"
+            >
+              {{ 'customers.forms.email' | t }}
+            </label>
+          </div>
+
+          <div class="form-action-row">
+            <button class="button-primary" type="submit">
+              {{ 'customers.forms.submit' | t }}
+            </button>
+
+            <button
+              class="button-secondary"
+              type="button"
+              data-login-toggle
+            >
+              {{ 'customers.forms.cancel' | t }}
+            </button>
+          </div>
+        {% endform %}
+      </div>
+
+      {% if shop.checkout.guest_login %}
+        <div class="account-register account-register--guest">
+          <h2 class="account-register-subtitle">
+            {{ 'customers.guest_login.title' | t }}
+          </h2>
+
+          {% form 'guest_login' %}
+            <button class="button-primary" type="submit">
+              {{ 'customers.guest_login.submit' | t }}
+            </button>
+          {% endform %}
+        </div>
+      {% endif %}
+    </article>
+  </div>
+</section>
+<style>
+      @media screen and (max-width: 720px) {
+      .login-image{
+        display: none
+      }
+        .login-form{
+          width:100%
+        }
+    }
+      @media (min-width: 720px) {
+        .login-image{
+          width: 50%
+        }
+        .login-image img{
+          width: 100%
+        }
+        .login-form{
+          width:50%;
+          padding-right: 3rem;
+          padding-left: 3rem;
+        }
+      }
+    .account-page-login{
+      display:flex;
+    }
+    .login-text{
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .form-field--half{
+      width: calc(50% - 10px) !important;
+    }
+    span a{
+      text-decoration: underline!important;
+      font-weight: 600;
+    }
+  .password-icon{
+    position: absolute;
+    right: 2%;
+    top: 30%;
+    font-size: 1.25rem;
+    color: gray;
+    cursor: pointer;
+  }
+</style>
+{% schema %}
+{
+  "name": "t:sections.login.name",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:sections.login.header_1.content"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.login.image.label"
+    }
+  ]
+}
+{% endschema %}
+<script>
+  document.addEventListener("DOMContentLoaded", ()=> {
+    localStorage.removeItem("outil_access_token");
+    const form = document.getElementById("customer_login");
+    const email = document.getElementById("customer_email");
+    const password = document.getElementById("customer_password");
+    if(form){
+      let tried = false;
+      let allowSubmit = true;
+      const onsub = form.onsubmit;
+      form.onsubmit = "";
+      const action = form.action;
+      form.action = "";
+      form.addEventListener("submit", (e)=>{
+        if (!allowSubmit){
+          e.preventDefault();
+        }
+        if(!tried && allowSubmit){
+          allowSubmit = false;
+          e.preventDefault()
+          if(email.value && password.value)
+          fetch(OUTIL_PERSO_API+"auth/login", {
+              method: 'POST',
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ "email": email.value, "password": password.value, "originWebSite": "PC" })
+          }).then(response => response.json())
+            .then(response => {if(response["access_token"]) {localStorage.setItem("outil_access_token", response["access_token"]); localStorage.setItem("just_logged_in","true");}
+                tried= true; form.onsubmit = onsub; form.action = action; form.submit(); allowSubmit = true;
+                              })
+            .catch(err=>{tried= true; form.onsubmit = onsub; form.action = action; form.submit(); allowSubmit = true;})
+        }
+      })
+    }
+  })
+</script>

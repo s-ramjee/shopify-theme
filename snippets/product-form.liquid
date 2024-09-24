@@ -1,0 +1,1223 @@
+{% comment %}
+  @param product
+
+  @param selected_variant
+
+  @param show_dynamic_checkout_button {Boolean}
+    If true, show dynamic checkout button
+{% endcomment %}
+
+{% if is_product_modal and show_dynamic_checkout_button %}
+  {% assign quickshop_smart_buttons = true %}
+{% endif %}
+
+{% if is_product_modal == false and show_dynamic_checkout_button %}
+  {% assign product_smart_buttons = true %}
+{% endif %}
+
+{% if product.selling_plan_groups.size > 0 %}
+  {% assign show_dynamic_checkout_button = false %}
+{% endif %}
+
+{% if selected_variant.available == false %}
+  {% assign quickshop_smart_buttons = false %}
+  {% assign product_smart_buttons = false %}
+{% endif %}
+
+<style>
+  .hidden {
+    display: none;
+  }
+
+  .gpo-app .gpo-swatches input+label .gpo-swatch__inner {
+    border-radius: 25px !important;
+  }
+
+  .gpo-app .gpo-swatches input + label {
+    border-color: white !important;
+    border-radius: 25px;
+  }
+
+  .gpo-app .gpo-swatches input:checked + label {
+    border-color: #ddd !important;
+    border-radius: 25px;
+  }
+
+  {% if block_settings.add_to_cart_font_size %}
+    #customize-button > span {
+      font-size: {{ block_settings.add_to_cart_font_size }}px !important;
+    }
+  {% endif %}
+</style>
+
+
+
+{%- capture color_key -%}
+    {%- if localization.language.iso_code == "de" -%}
+      Farbe
+    {%- elsif localization.language.iso_code == "it" -%}
+    Colore
+    {%- else -%}
+    Colour
+      {%- endif -%}
+{%- endcapture -%}
+
+<div class="price product__price">
+  <span class="price__current">
+    {{- 'product_price.price.starts_from' | t }}
+    <span class="money"></span>
+  </span>
+</div>
+{% if product.metafields.custom.show_free_envelopes %}
+  <div class="">
+    <span class="">
+      {{- 'product.general.free_envelopes' | t }}
+    </span>
+  </div>
+{% endif %}
+
+{% assign product_form_class = 'option-style-' | append: settings.product_option_style %}
+
+{% form 'product', product, class: product_form_class, data-product-form: '' %}
+  {% comment %}
+    Display variant options for a product
+
+    @param product
+    @param selected_variant
+    @param style
+
+    @param enable_swatches
+    @param swatches_shape
+    @param swatches_option_trigger
+    @param swatches_option_style
+    @param swatches_product_page_size
+    @param swatch_colors
+
+    @param select_main_classes
+    @param select_classes
+    @param input_select_wrapper_classes
+    @param input_select_classes
+    @param input_select_label_classes
+    @param input_select_chevron_classes
+
+    @param radios_classes
+    @param option_header_classes
+    @param option_name_classes
+    @param option_values_classes
+    @param option_value_classes
+    @param option_value_label_classes
+    @param option_value_input_classes
+    @param option_value_name_classes
+
+    @param swatches_classes
+    @param option_swatch_wrapper_classes
+    @param option_swatch_classes
+    @param option_swatch_inner_classes
+  {% endcomment %}
+  {% liquid
+    assign product = product
+    assign selected_variant = selected_variant
+    assign style = settings.product_option_style
+    assign enable_swatches = settings.swatches_enable
+    assign sold_out_options = settings.sold_out_options
+    assign swatches_shape = settings.swatches_shape
+    assign swatches_option_trigger = settings.swatches_swatch_trigger
+    assign swatches_option_style = settings.swatches_option_style
+    assign swatches_product_page_size = settings.swatches_product_page_size
+    assign swatches_custom_colors = settings.swatches_custom_colors
+    assign swatch_file_type = 'files'
+    assign select_main_classes = 'form-options'
+    assign select_classes = 'form-field form-options'
+    assign input_select_wrapper_classes = 'form-field-select-wrapper'
+    assign input_select_classes = 'form-field-input form-field-select'
+    assign input_select_label_classes = 'form-field-title'
+    assign radios_classes = 'form-options form-options-selectable-boxes'
+    assign option_header_classes = 'options-selection__option-header'
+    assign option_name_classes = 'options-selection__option-name'
+    assign option_values_classes = 'options-selection__option-values'
+    assign option_value_classes = 'options-selection__option-value'
+    assign option_value_label_classes = 'options-selection__option-value-label'
+    assign option_value_input_classes = 'options-selection__option-value-input'
+    assign option_value_name_classes = 'options-selection__option-value-name'
+    assign swatches_classes = 'form-options form-options-swatches'
+    assign option_swatch_wrapper_classes = 'option-value-name option-value-swatch-wrapper'
+    assign option_swatch_classes = 'swatch'
+    assign option_swatch_inner_classes = 'swatch-inner'
+    assign recipient_form_label_position = 'bottom'
+    assign recipient_form_input_classes = 'form-field-input'
+    assign recipient_form_label_classes = 'form-field-title'
+    assign recipient_form_textarea_classes = 'form-field-textarea'
+    assign recipient_form_textarea_rows = 0
+    assign show_recipient_form_placeholders = false
+    assign show_recipient_form_labels = true
+  %}
+
+  {% comment %}Inject @pixelunion/shopify-variants-ui/variant-selection begin{% endcomment %}
+  {% comment %}
+    Display variant options for a product
+
+    @param product
+    @param selected_variant
+    @param variant_selection_id
+    @param sold_out_options
+    @param style
+
+    @param enable_swatches
+    @param swatches_shape
+    @param swatches_option_trigger
+    @param swatches_option_style
+    @param swatches_product_page_size
+    @param swatches_custom_colors
+  {% endcomment %}
+
+  <variant-selection
+    {% if variant_selection_id != blank %}
+      id="{{ variant_selection_id }}"
+    {% endif %}
+    class="variant-selection"
+    product-url="{{ product.url }}.js"
+    variant="{% if selected_variant %}{{ selected_variant.id }}{% else %}not-selected{% endif %}"
+    data-variant-selection
+  >
+    {% if product.has_only_default_variant %}
+      <input
+        class="variant-selection__variants variant-selection__variants--default"
+        name="id"
+        type="hidden"
+        value="{{ product.variants.first.id }}"
+        data-variants
+      >
+    {% else %}
+      <noscript>
+        <style>
+          .variant-selection__variants {
+            display: block !important;
+          }
+        </style>
+      </noscript>
+      <select
+        class="variant-selection__variants"
+        name="id"
+        style="display: none"
+        data-variants
+      >
+        <option
+          value="not-selected"
+          disabled
+          {% if selected_variant == blank %}
+            selected
+          {% endif %}
+        >
+          {{ 'product.variants.choose_variant' | t }}
+        </option>
+        {% for variant in product.variants %}
+          <option
+            {% if selected_variant and selected_variant.id == variant.id %}
+              selected
+            {% endif %}
+            value="{{ variant.id }}"
+            {% unless variant.available %}
+              disabled
+            {% endunless %}
+          >
+            {{ variant.title }} - {{ variant.price | money }}
+          </option>
+        {% endfor %}
+      </select>
+
+      {%- if product.metafields.custom.designer.value -%}
+        <div class="my-2">
+          <span>
+            <span style="font-weight: 400; color: #464646">{{ 'product.info.designer' | t }} :</span>
+            {{ product.metafields.custom.designer.value }}
+          </span>
+        </div>
+      {%- endif -%}
+      {% comment %}
+        {%- if product.metafields.custom.dimension.value -%}
+          <div class="my-2">
+            <span>
+              <span style="font-weight: 400; color: #464646">{{ 'product.info.dimension' | t }} :</span>
+              {{ product.metafields.custom.dimension.value }}
+            </span>
+          </div>
+        {%- endif -%}
+        {%- if product.metafields.custom.orientation.value -%}
+          <div class="my-2">
+            <span>
+              <span style="font-weight: 400; color: #464646">{{ 'product.info.orientation' | t }} :</span>
+              {{ product.metafields.custom.orientation.value }}
+            </span>
+          </div>
+        {%- endif -%}
+      {% endcomment %}
+      {% comment %}Inject @pixelunion/shopify-variants-ui/options-selection begin{% endcomment %}
+      {% comment %}
+        Display variant options for a product
+
+        @param product
+        @param selected_variant
+        @param variant_selection_id
+        @param sold_out_options
+        @param style
+
+        @param enable_swatches
+        @param swatches_shape
+        @param swatches_option_trigger
+        @param swatches_option_style
+        @param swatches_product_page_size
+        @param swatches_custom_colors
+        @param swatch_file_type
+      {% endcomment %}
+
+      <options-selection
+        {% if variant_selection_id != blank %}
+          variant-selection="{{ variant_selection_id }}"
+        {% endif %}
+        style="display: none;"
+        {% if sold_out_options == 'disabled' %}
+          disable-unavailable
+        {% endif %}
+        {% if sold_out_options == 'hidden' %}
+          remove-unavailable
+        {% endif %}
+        data-options-selection
+      >
+        <script>
+          (function() {
+            const scriptTag = document.scripts[document.scripts.length - 1];
+            const parentTag = scriptTag.parentNode;
+
+            parentTag.style.display = '';
+          })()
+        </script>
+
+        {% for option in product.options_with_values %}
+          {% unless option.name == color_key %}
+          {% assign option_index = forloop.index0 %}
+          {% assign show_swatches = false %}
+          {% if enable_swatches %}
+            {%- assign swatches_option_trigger = swatches_option_trigger | strip | downcase -%}
+            {%- assign option_name = option.name | strip | downcase -%}
+
+            {% if option_name == swatches_option_trigger %}
+              {% assign show_swatches = true %}
+              {% assign swatch_option_key = 'option' | append: forloop.index %}
+            {% endif %}
+          {% endif %}
+
+          {% if style == 'select' and show_swatches == false %}
+            {% render 'options-select',
+              product: product,
+              selected_variant: selected_variant,
+              option: option,
+              option_index: option_index
+            %}
+          {% elsif style == 'radio' or show_swatches == true %}
+            {% render 'options-radios',
+              product: product,
+              selected_variant: selected_variant,
+              option: option,
+              option_index: option_index,
+              show_swatches: show_swatches,
+              swatch_option_key: swatch_option_key,
+              swatch_size: swatches_product_page_size,
+              swatches_option_style: swatches_option_style,
+              swatch_file_type: swatch_file_type,
+              swatches_custom_colors: swatches_custom_colors,
+              swatches_shape: swatches_shape,
+              show_plus: true
+            %}
+          {% endif %}
+            {% endunless %}
+        {% endfor %}
+      </options-selection>
+      {% comment %}Inject @pixelunion/shopify-variants-ui/options-selection end{% endcomment %}
+    {% endif %}
+  </variant-selection>
+  {% comment %}Inject @pixelunion/shopify-variants-ui/variant-selection end{% endcomment %}
+
+  {% comment %}Inject @pixelunion/pxs-gift-card-recipient-form/recipient-form begin{% endcomment %}
+  {% comment %}
+    @param form {Object}
+      The form object
+
+    @param section {Object}
+      The section object
+
+    @param show_recipient_form {Boolean}
+      If true, show the gift card recipient form
+
+    @param show_recipient_form_placeholders {Boolean}
+      If true, show recipient form placeholder attributes
+
+    @param show_recipient_form_labels {Boolean}
+      If true, show recipient form input labels
+
+    @param show_recipient_form_max_characters_message {Boolean}
+      If true, show the recipient form max characters message
+
+    @param recipient_form_textarea_rows {Number}
+      A numerical value to specify the number of textarea rows
+
+    @param recipient_form_textarea_classes {String}
+      A space separated list of class names added to recipient form textarea
+
+    @param recipient_form_input_classes {String}
+      A space separated list of class names added to recipient form inputs
+
+    @param recipient_form_label_classes {String}
+      A space separated list of class names added to recipient form labels
+
+    @param recipient_form_label_position {String}
+      The recipient form input label position, either 'top', or 'bottom'
+  {% endcomment %}
+
+  {% liquid
+    assign show_recipient_form_placeholders = show_recipient_form_placeholders | default: false
+    assign show_recipient_form_labels = show_recipient_form_labels | default: true, allow_false: true
+    assign show_recipient_form_max_characters_message = show_recipient_form_max_characters_message | default: true, allow_false: true
+    assign recipient_form_textarea_rows = recipient_form_textarea_rows | default: 5
+    assign recipient_form_label_position = recipient_form_label_position | default: 'top'
+  %}
+
+  {%- if show_recipient_form and product.gift_card? -%}
+    <details class="recipient-disclosure" data-recipient-disclosure>
+      <summary class="recipient-disclosure__summary">
+        <label
+          class="recipient-disclosure__checkbox-label"
+          for="recipient-disclosure__checkbox-{{ section.id }}"
+        >
+          <input
+            class="recipient-disclosure__checkbox"
+            id="recipient-disclosure__checkbox-{{ section.id }}"
+            type="checkbox"
+            name="properties[__shopify_send_gift_card_to_recipient]"
+            tabindex="-1"
+            data-recipient-disclosure-checkbox
+          >
+
+          {%- render 'recipient-form-disclosure-icon' -%}
+
+          <span class="recipient-disclosure__checkbox-label-text">
+            {{- 'recipient.form.checkbox_label' | t -}}
+          </span>
+        </label>
+      </summary>
+
+      <div class="recipient-form" data-recipient-form>
+        <div class="recipient-form__field">
+          {%- if show_recipient_form_labels -%}
+            {%- capture recipient_email_label -%}
+              <label
+                class="
+                  recipient-form__label
+                  {{ recipient_form_label_classes }}
+                "
+                for="recipient-email-{{ section.id }}"
+              >
+                {{- 'recipient.form.email_label' | t -}}
+                <span class="recipient-form__required"> *</span>
+              </label>
+            {%- endcapture -%}
+          {%- endif -%}
+
+          {%- capture recipient_email_input -%}
+            <input
+              class="
+                recipient-form__input
+                recipient-form__input--email
+                {{ recipient_form_input_classes }}
+              "
+              id="recipient-email-{{ section.id }}"
+              type="email"
+              {%- if show_recipient_form_placeholders -%}
+                placeholder="{{- 'recipient.form.email_placeholder' | t -}}"
+              {%- endif -%}
+              {%- unless show_recipient_form_labels -%}
+                aria-label="{{- 'recipient.form.email_placeholder' | t -}}"
+              {%- endunless -%}
+              name="properties[Recipient email]"
+              value="{{ form.email }}"
+              data-recipient-form-input
+              data-recipient-form-email-input
+            >
+          {%- endcapture -%}
+
+          {%- capture recipient_error_message -%}
+            <span class="recipient-form__error-message" data-recipient-form-error-message>
+              {{- 'recipient.form.error_message' | t -}}
+            </span>
+          {%- endcapture -%}
+
+          {%- if recipient_form_label_position == 'top' -%}
+            <div class="recipient-form__input-wrapper">
+              {{- recipient_email_label -}}
+              {{- recipient_email_input -}}
+            </div>
+            {{- recipient_error_message -}}
+          {%- else -%}
+            <div class="recipient-form__input-wrapper">
+              {{- recipient_email_input -}}
+              {{- recipient_email_label -}}
+            </div>
+            {{- recipient_error_message -}}
+          {%- endif -%}
+        </div>
+
+        <div class="recipient-form__field">
+          <div class="recipient-form__input-wrapper">
+            {%- if show_recipient_form_labels -%}
+              {%- capture recipient_name_label -%}
+                <label
+                  class="
+                    recipient-form__label
+                    {{ recipient_form_label_classes }}
+                  "
+                  for="recipient-name-{{ section.id }}"
+                >
+                  {{- 'recipient.form.name_label' | t -}}
+                </label>
+              {%- endcapture -%}
+            {%- endif -%}
+
+            {%- capture recipient_name_input -%}
+              <input
+                class="
+                  recipient-form__input
+                  recipient-form__input--name
+                  {{ recipient_form_input_classes }}
+                "
+                id="recipient-name-{{ section.id }}"
+                type="text"
+                {%- if show_recipient_form_placeholders -%}
+                  placeholder="{{- 'recipient.form.name_placeholder' | t -}}"
+                {%- endif -%}
+                {%- unless show_recipient_form_labels -%}
+                  aria-label="{{- 'recipient.form.name_placeholder' | t -}}"
+                {%- endunless -%}
+                name="properties[Recipient name]"
+                value="{{ form.name }}"
+                data-recipient-form-input
+              >
+            {%- endcapture -%}
+
+            {%- if recipient_form_label_position == 'top' -%}
+              {{ recipient_name_label }}
+              {{ recipient_name_input }}
+            {%- else -%}
+              {{ recipient_name_input }}
+              {{ recipient_name_label }}
+            {%- endif -%}
+          </div>
+        </div>
+
+        <div class="recipient-form__field">
+          <div class="recipient-form__input-wrapper">
+            {%- liquid
+              assign max_characters_length = 200
+
+              if show_recipient_form_max_characters_message
+                assign max_characters_message = 'recipient.form.max_characters' | t: max_characters: max_characters_length
+              endif
+            -%}
+
+            {%- if show_recipient_form_labels -%}
+              {%- capture recipient_message_label -%}
+                <label
+                  class="
+                    recipient-form__label
+                    {{ recipient_form_label_classes }}
+                  "
+                  for="recipient-message-{{ section.id }}"
+                >
+                  {{- 'recipient.form.message_label' | t -}}
+                </label>
+              {%- endcapture -%}
+            {%- endif -%}
+
+            {%- capture recipient_message_input -%}
+              <textarea
+                class="
+                  recipient-form__input
+                  recipient-form__input--message
+                  {{ recipient_form_input_classes }}
+                  {{ recipient_form_textarea_classes }}
+                "
+                id="recipient-message-{{ section.id }}"
+                {%- if show_recipient_form_placeholders -%}
+                  placeholder="{{- 'recipient.form.message_placeholder' | t -}}"
+                {%- endif -%}
+                {%- unless show_recipient_form_labels -%}
+                  aria-label="{{- 'recipient.form.message_placeholder' | t -}}"
+                {%- endunless -%}
+                name="properties[Message]"
+                {%- if recipient_form_textarea_rows != 0 -%}
+                  rows="{{ recipient_form_textarea_rows }}"
+                {%- endif -%}
+                maxlength="{{ max_characters_length }}"
+                data-recipient-form-input
+              >
+                {{- form.message -}}
+              </textarea>
+            {%- endcapture -%}
+
+            {%- if recipient_form_label_position == 'top' -%}
+              {{ recipient_message_label }}
+              {{ recipient_message_input }}
+            {%- else -%}
+              {{ recipient_message_input }}
+              {{ recipient_message_label }}
+            {%- endif -%}
+          </div>
+
+          {%- if show_recipient_form_max_characters_message -%}
+            <span class="recipient-form__max-characters-message">
+              <small>
+                {{- max_characters_message -}}
+              </small>
+            </span>
+          {%- endif -%}
+        </div>
+      </div>
+    </details>
+  {%- endif -%}
+  {% comment %}Inject @pixelunion/pxs-gift-card-recipient-form/recipient-form end{% endcomment %}
+
+  {% comment %}<span class="product-finishes-options">{{ 'product.general.paper_and_finish' | t }}</span>{% endcomment %}
+  <div class="mb-2" options>
+    {%- for option in product.selected_or_first_available_variant.metafields.custom.options.value -%}
+      {% unless option.display_swatch.value %}
+        <div class="form-field-row mt-2">
+          <div style="position: relative">
+            <select
+              class="form-field-input form-field-select"
+              id="{{ option.option_type }}{{ product.id }}"
+            >
+              {% for option_value in option.option_values.value %}
+                <option
+                  {% if option_value.price_increase %}
+                    price_increase="{{ option_value.price_increase.value }}"
+                  {% endif %}
+                  {% if forloop.first %}
+                    selected
+                  {% endif %}
+                  value="{{ option_value.key }}"
+                  id="{{ option.option_type }}{{ product.id }}{{ option_value.option_value }}"
+                >
+                  {{ option_value.option_value }}
+                  {% if option_value.price_increase %}
+                    {%- assign price_increase = option_value.price_increase.value | money_without_currency -%}
+                    {{ 'product.general.price_increase' | t: price: price_increase }}
+                  {% endif %}
+                </option>
+              {% endfor %}
+            </select>
+
+            <label class="form-field-title">
+              {{ option.option_name }}
+            </label>
+          </div>
+        </div>
+      {% endunless %}
+    {%- endfor -%}
+  </div>
+
+  <button
+    id="customize-button"
+    class="button-primary product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded my-2 mt-4"
+    onclick="handleCustomizeButtonClick()"
+    type="button"
+  >
+    <span class="atc-button--text">
+      {{ 'product.buttons.customize' | t }}
+    </span>
+  </button>
+
+{% comment %}
+  {% if product.type == "Card" %}
+    {% render 'sample-card-snippet' %}
+  {% endif %}
+  {% endcomment %}
+{% comment %}
+  <button class="product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded mb-4" type="button">
+    <span class="atc-button--text">
+      {{ 'product.buttons.sample' | t }}
+    </span>
+  </button>
+  
+    <div class="product-form--atc">
+      <div class="product-form__action-wrapper">
+        <button
+          id="add-to-chart-button"
+          class="
+            button-primary
+            product-form--atc-button
+          "
+          type="submit"
+          data-product-atc
+        >
+          <span class="atc-button--text">
+            {{ 'product.buttons.add_to_cart' | t }}
+          </span>
+          <span class="atc-button--icon">
+            {%- render 'icon-spinner' -%}
+          </span>
+        </button>
+
+        {% if show_dynamic_checkout_button %}
+          {{ form | payment_button }}
+        {% endif %}
+      </div>
+    </div>
+  {% endcomment %}
+{% endform %}
+
+<div data-payment-terms-reference style="display: none;">
+  {{ form | payment_terms }}
+</div>
+
+{% if enable_local_pickup %}
+  <div class="surface-pick-up" data-surface-pick-up></div>
+{% endif %}
+
+<script>
+  
+
+     $(document).ready(async () => {
+const variants = {{product.variants | json}};
+  const product{{ jsSafeSectionId }}{{product.id}} = {{product | json }};
+  let currentVariant = {%- if product.selected_variant -%} {{product.selected_variant | json }} {%- else -%} {{product.variants[0] | json }} {%- endif -%};
+  const variantsInfo = {};
+
+  let pricesInfo;
+  let variantOptions;
+  let optionValues;
+
+   const colorsKeys = {};
+       {% comment %}
+          On utilise les éléments key qui seront les mêmes dans toutes les langues du métaobjet des couleurs
+          Comme les alts des images contiendront les couleurs qui sont dans le key, il faut le conserver et faire la correspondance entre l'option de la variante qui est traduite
+          et la couleur dans le alt
+       {% endcomment %}
+       
+      {% for v in product.variants %}
+        
+       variantOptions = {};
+       {% if product.variants.first.metafields.custom.prices %}
+         pricesInfo = [];
+           {% paginate v.metafields.custom.prices.value.prices.value by 150 %}
+             {% for price in v.metafields.custom.prices.value.prices.value %}
+                 pricesInfo.push({quantity: {{ price.quantity.value}}, price: {{ price.price.value }}})
+              {% endfor %}
+           {% endpaginate %}
+       {% endif %}
+
+         {% for option in v.metafields.custom.options.value %}
+           optionValues = [];
+           {% for option_value in option.option_values.value %}
+              optionValues.push(
+                {
+                  value: "{{option_value.option_value.value}}",
+                  key: "{{ option_value.key.value }}",
+                  price_increase: {{option_value.price_increase.value}} {%- if option_value.option_icon -%}, option_icon: "{{option_value.option_icon.value | image_url}}"  {%- endif -%},
+                  id: "{{ option_value.key.value }}"
+                }
+              )
+             {% if option.option_type.value == color_key %}
+                colorsKeys["{{ option_value.key.value }}"]= "{{ option_value.option_value.value }}"
+             {% endif %}
+           {% endfor %}
+           variantOptions['{{option.option_type.value}}']= {name: "{{ option.option_name.value }}", values: optionValues}
+         {% endfor %}
+        variantsInfo[{{v.id}}] = {prices: pricesInfo, options: variantOptions};
+     {% endfor %}
+           let priceList = variantsInfo[currentVariant.id].prices;
+  let basePrice = currentVariant ? currentVariant.price : product{{ jsSafeSectionId }}{{product.id}}.price;
+       {% unless product.variants.first.metafields.custom.prices %}
+         changePrice(formatMoney(basePrice,"\{\{ amount \}\}€"));
+       {% endunless %}
+  let computedPrice = basePrice;
+  let selectedQuantity = priceList? priceList[0].quantity: null;
+  const images = [];
+  {% for productImage in product.images  %}
+    images.push("{{productImage.alt}}")
+  {% endfor %}
+     function changePrice(newPrice){
+       const price = document.querySelector(".price__current .money");
+       if(price){
+         price.innerText = newPrice;
+       }
+     }
+       
+        //setColors(variantsInfo[currentVariant.id].options['{{color_key | strip}}']);
+        setOptions(variantsInfo[currentVariant.id].options);
+       {% if product.variants.first.metafields.custom.prices %}
+       const formatSelect = document.querySelector("options-selection select");
+       formatSelect.addEventListener("change", ()=> {handleFormatChange(formatSelect.selectedOptions[0].value); positionLabels()});
+       const variantImages = getVariantImages(currentVariant, images)
+       if(variantsInfo[currentVariant.id].prices && variantsInfo[currentVariant.id].prices.length>0)
+         displayNewPrices(variantsInfo[currentVariant.id].prices);
+       setVariantImages(getVariantImages(currentVariant,images))
+
+       const colorSwatches = document.querySelectorAll("options-selection .options-selection__swatches label");
+       colorSwatches.forEach(swatch => {
+         swatch.addEventListener("click", ()=> {handleColorChange($(swatch).find("input")[0].value)})
+       })
+       {% endif %}
+      positionLabels();
+       
+     function computePrice(){
+       const options = document.querySelectorAll("div[options] select:not(disabled)");
+       let computedPrice = basePrice
+       options.forEach((option)=>{
+         const value = option.value;
+         const selectedOption = option.options[option.selectedIndex];
+         const priceIncrease = selectedOption.getAttribute("price_increase");
+         if(priceIncrease){
+           const priceIncreaseInt = parseInt(priceIncrease);
+           if(priceIncreaseInt){
+               computedPrice = priceIncreaseInt + computedPrice;
+           }
+         }
+       });
+       return computedPrice;
+     }
+
+  function handleFormatChange(selectedOption){
+     const selectedVariant = getMatchingVariant(product{{ jsSafeSectionId }}{{product.id}}.variants, currentVariant ,selectedOption,0);
+     if(selectedVariant){
+       //setColors(variantsInfo[selectedVariant.id].options['{{color_key | strip}}']);
+       setOptions(variantsInfo[selectedVariant.id].options);
+       displayNewPrices(variantsInfo[selectedVariant.id].prices);
+       currentVariant = selectedVariant;
+       const computedPrice = computePrice();
+       changePrice(formatMoney(computedPrice * selectedQuantity,"\{\{ amount \}\}€"));
+       setVariantImages(getVariantImages(currentVariant,images));
+       changeSku(selectedVariant.sku)
+     }
+  }
+
+  function changeSku(sku){
+    const skuElement = document.getElementById("{{ product.id }}-sku");
+    if(skuElement){
+      skuElement.innerText = sku;
+    }
+  }
+       
+  function handleColorChange(selectedOption){
+    const selectedVariant = getMatchingVariant(product{{ jsSafeSectionId }}{{product.id}}.variants, currentVariant ,selectedOption);
+    if(selectedVariant){
+      currentVariant = selectedVariant;
+      setVariantImages(getVariantImages(currentVariant,images))
+    }
+  }
+
+  function handleOptionChange(e){
+    const computedPrice = computePrice();
+    changePrice(formatMoney(computedPrice * selectedQuantity,"\{\{ amount \}\}€"));
+    setVariantImages(getVariantImages(currentVariant,images))
+  }
+
+  function handleQuantityChange(e){
+    basePrice = priceList[e.target.selectedIndex].price;
+    const computedPrice = computePrice();
+    selectedQuantity = priceList[e.target.selectedIndex].quantity
+    changePrice(formatMoney(computedPrice * selectedQuantity,"\{\{ amount \}\}€"));
+  }
+
+  {% comment %}
+  function handleFinition(e,otherFinitionName){
+      const otherSelect = document.getElementById(otherFinitionName+"{{ product.id }}");
+      const selectPapier = document.getElementById("Type de papier{{ product.id }}");
+      if(e.target.selectedOptions[0].value != "Non"){
+        if(otherSelect){
+            otherSelect.selectedIndex = 0;
+            otherSelect.disabled = true;
+        }
+        if(selectPapier){
+          const satine = document.getElementById("Type de papier{{ product.id }}Papier Satiné");
+          if(satine){
+            selectPapier.selectedIndex = satine.index;
+            selectPapier.disabled = true;
+          }
+        }
+      }else{
+        if(otherSelect)
+          otherSelect.disabled = false;
+        if(selectPapier)
+          selectPapier.disabled = false;
+      }
+    }
+  {% endcomment %}
+
+  //Enlève toutes les options et renvoie le container
+  function clearOptions(){
+    const options = document.querySelector("div[options]")
+    while(options.firstChild){
+      options.firstChild.remove();
+    }
+    return options;
+  }
+
+  //Affiche les options passées en paramètre
+  function setOptions(options){
+    const optionsContainer = clearOptions();
+    Object.keys(options).forEach(key =>{
+      if(key != "{{color_key | strip}}"){
+        const element = createOption(key,options[key])
+        optionsContainer.appendChild(element);
+      }
+    })
+  }
+
+  //Créer l'élément DOM d'une option et le renvoie
+  function createOption(key, optionObject){
+    const selectList = document.createElement("select");
+    selectList.className = "form-field-input form-field-select form-field-filled options-selection__input-select";
+    selectList.setAttribute('id',name+"{{product.id}}");
+
+    optionObject.values.forEach(option_value => {
+      const option = document.createElement("option");
+      option.value = option_value.key;
+      option.text = option_value.value;
+      option.setAttribute('id',name+"{{ product.id }}"+option_value.value);
+      option.setAttribute('price_increase',option_value.price_increase);
+      selectList.appendChild(option);
+    })
+
+    selectList.addEventListener('change',handleOptionChange);
+
+    const label = document.createElement("label");
+    label.className = "form-field-title options-selection__select-label";
+    label.innerText = optionObject.name;
+
+    const selectDiv = document.createElement("div");
+    //selectDiv.style.position = "relative";
+    selectDiv.className ="options-selection__select"
+    selectDiv.appendChild(label);
+
+    const containerDiv = document.createElement("div");
+    containerDiv.className= "form-field-row options-selection__input-select-wrapper";
+    containerDiv.appendChild(selectList);
+    
+    
+    const chevronDiv = document.createElement("div");
+    chevronDiv.className="options-selection__input-select-chevron";
+    chevronDiv.innerHTML = `
+      <svg aria-hidden="true" focusable="false" role="presentation" width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4.5L7 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+          <path d="M4 4.5L1 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+        </svg>
+        `
+    containerDiv.append(chevronDiv);
+
+    const optionDiv = document.createElement("div");
+    optionDiv.className= "options-selection__select-wrapper mt-2"
+  
+    selectDiv.append(label);
+    selectDiv.append(containerDiv);
+
+    optionDiv.append(selectDiv);
+    return optionDiv;
+  }
+
+  //Affiche les couleurs qui doivent être affichées et cache les autres
+  //Si la variante n'a aucune couleur, on cache tout le composant de couleur
+  function setColors(colors){
+   if(colors){
+     document.querySelector('.options-selection__swatches--color_swatch').style.display = "";
+     const allColors = document.querySelectorAll("fieldset.options-selection__swatches--color_swatch div[data-variant-option] > div");
+     let isFirst = true;
+     allColors.forEach(node => {
+       if(colors.values.some(color => (node.children && node.children[0] && node.children[0].children && node.children[0].children[0] && node.children[0].children[0].value == color.value))){
+         node.style.display = "";
+         if(isFirst){
+           node.click();
+           isFirst = false;
+         }
+       }
+       else {
+         node.style.display = "none";
+       }
+     })
+   }
+   else{
+     const colorsSelection = document.querySelector('.options-selection__swatches--color_swatch')
+     if(colorsSelection)
+       colorsSelection.style.display = "none"
+   }
+  }
+
+  //On utilise le "alt" de l'image pour déterminer si elle correspond à la variante passée en paramètre
+  function getVariantImages(variant, mediaAlts){
+    const colors = variantsInfo[variant.id]?.options?.{{color_key |strip}}?.values;
+    const selectedOptions = getSelectedOptions();
+    const locale = Shopify.locale ?? "fr";
+    const variantImages = mediaAlts.filter(alt => {
+      let valid = true;
+      if(alt){
+        const cleanAlt = alt.replace(/,+/g,',')
+        const altSplit = cleanAlt.split("#");
+        const variantImageInfos = altSplit[altSplit.length -1];
+        variantImageInfos.split(",").every(x => {
+          const elementSplit = x.split("=");
+          if(elementSplit.length !=2){
+            valid = false;
+            return false;
+          }
+          if(elementSplit[0]=="lang" && elementSplit[1].localeCompare(locale,undefined,{sensitivity: 'accent' })!=0){
+            valid = false;
+            return false;
+          }
+          if(elementSplit[0] == "format"){
+            const skuSplit = currentVariant.sku.split("-");
+            if(skuSplit.length <= 1 || skuSplit[1] != elementSplit[1]){
+              valid = false;
+              return false;
+            }
+          }
+          if(elementSplit[0] == "color"){
+            if(!colorsKeys || !(variant.options.includes(colorsKeys[elementSplit[1]]))){
+              valid = false;
+              return false;
+            }
+          }
+          if(elementSplit[0] != "lang" && elementSplit[0] != "format" && elementSplit[0] != "color"){
+            valid = valid && ((variant.options.includes(elementSplit[1]))||(selectedOptions.includes(elementSplit[1])));
+            if(!valid){
+              return false;
+            }
+              
+          }
+          return true;
+        })
+      }else
+        valid = false;
+      return valid;
+
+    })
+    return variantImages;
+  }
+
+  function getSelectedOptions(){
+    const selects = document.querySelectorAll("div[options] select");
+    const selectedOptions = [];
+    selects.forEach(s => {
+      selectedOptions.push(s.value);
+    })
+    return selectedOptions;
+  }
+
+  //Cache les images qui ne concernent pas la variante choisie
+  function setVariantImages(images){
+    const imageAlts=images.reduce((accumulator,currentValue)=> accumulator+",#"+currentValue, "");
+    const navigationImages = document.querySelectorAll(".gallery-navigation--scroller button");
+    let isFirst = true;
+    navigationImages.forEach(x => {
+      const imageElement = x.children[0].children[0];
+      if(!imageElement.alt || !imageElement.alt.length>1 || !imageAlts.includes(imageElement.alt)){
+        x.style.display = "none"
+      }
+      else{
+        x.style.display = "";
+        if(isFirst){
+          x.click();
+          isFirst= false;
+        }
+      }
+    })
+    checkNavigationButtons();
+    const thumbnails = document.querySelectorAll(".gallery-navigation--scroller .product-gallery--media-thumbnail:not([style*='display: none'])");
+    if(thumbnails.length > 0)
+      thumbnails[0].click();
+  }
+
+  //Supprime la div des prix
+  function clearPrices(){
+    const prices = document.getElementById("prices-{{ product.id }}");
+    if(prices){
+      prices.remove();
+    }
+    return prices
+  }
+
+  //Crée la div des prix avec les prix passés en paramètres
+  function displayNewPrices(prices){
+    const oldPrices = clearPrices();
+    const optionText = (new DOMParser().parseFromString("{{ 'product.general.price_per_unit' | t : quantity: "%s", unit_price:"%s",total_price:"%s" }}", 'text/html')).documentElement.textContent;
+    
+    const pricesContainer = document.createElement("div");
+    pricesContainer.className= "form-field-row options-selection__input-select-wrapper";
+    pricesContainer.setAttribute("id","prices-{{ product.id }}");
+
+    const pricesDiv = document.createElement("div");
+    //pricesDiv.style.position = "relative";
+    pricesDiv.className = "options-selection__select-wrapper mt-2"
+
+    const pricesSelect = document.createElement("select");
+    pricesSelect.className ="form-field-input form-field-text form-field-filled options-selection__input-select";
+    pricesSelect.addEventListener("change", handleQuantityChange);
+    prices.forEach(p => {
+      pricesSelect.options[pricesSelect.options.length] = new Option(parse(optionText,p.quantity,formatMoney(p.price,"\{\{ amount \}\}"),formatMoney(parseInt(p.quantity) * parseInt(p.price),"\{\{ amount \}\}")), parseInt(p.quantity) * parseInt(p.price) );
+    });
+
+    //const oldSelect = document.querySelector("#prices-{{ product.id }} select");
+    selectedQuantityIndex = (oldPrices && oldPrices.children[0] && oldPrices.children[0].children[0] && (oldPrices.children[0].children[0].selectedIndex > -1)) ? oldPrices.children[0].children[0].selectedIndex : 0;
+    pricesSelect.selectedIndex = selectedQuantityIndex;
+
+    const pricesLabel = document.createElement("label");
+    pricesLabel.className = "form-field-title options-selection__select-label";
+    pricesLabel.innerText = "{{ 'product.general.quantity' | t }}";
+
+    const selectDiv = document.createElement("div");
+    selectDiv.className = "options-selection__select";
+
+    
+    pricesContainer.appendChild(pricesSelect);
+    
+    const chevronDiv = document.createElement("div");
+    chevronDiv.className="options-selection__input-select-chevron";
+    chevronDiv.innerHTML = `
+      <svg aria-hidden="true" focusable="false" role="presentation" width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4.5L7 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+          <path d="M4 4.5L1 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+        </svg>
+        `
+    pricesContainer.append(chevronDiv);
+    
+
+    selectDiv.append(pricesLabel);
+    selectDiv.append(pricesContainer);
+    
+    const pricesOption = document.createElement("div");
+    pricesOption.className = "options-selection__select-wrapper mt-2";
+
+    pricesOption.append(selectDiv)
+    
+    const productOptionsDiv = document.querySelector("div[options]") ?? document.querySelector("variant-selection");
+    const colorSelect = document.querySelector("variant-selection fieldset.options-selection__swatches--color_swatch");
+    if(colorSelect && (colorSelect.style.display != "none")&& productOptionsDiv.contains(colorSelect)){
+      productOptionsDiv.insertBefore(pricesOption, colorSelect)
+    }
+    else{
+      productOptionsDiv.appendChild(pricesOption)
+    }
+
+    basePrice = prices[selectedQuantityIndex].price;
+    selectedQuantity = prices[selectedQuantityIndex].quantity
+
+    priceList = prices;
+    const computedPrice = computePrice();
+    changePrice(formatMoney(computedPrice * selectedQuantity,"\{\{ amount \}\}€"));
+  }
+
+  //Positionne les labels des selects
+  function positionLabels(){
+    const selects = document.querySelectorAll(".product-details .form-field-row select");
+    selects.forEach(s =>{
+      if(s.nextElementSibling){
+        s.style.setProperty("padding-left",(s.nextElementSibling.offsetWidth+15)+"px","important");
+      }
+    })
+    const shopifyOptionsSelects = document.querySelectorAll(".product-details .options-selection__select")
+    shopifyOptionsSelects.forEach(s=>{
+      const label = s.firstElementChild;
+      if(label){
+        const select = label.nextElementSibling && label.nextElementSibling.firstElementChild ? label.nextElementSibling.firstElementChild : null;
+        if (select){
+          select.style.setProperty("padding-left",(label.offsetWidth+15)+"px","important");
+        }
+      }
+
+    })
+  }
+    async function getCart(){
+      return await fetch(window.Shopify.routes.root + 'cart.js').then(response => response.json())
+    }
+
+const stringIds = {
+  "FIND": 0,
+  "FINA": 1,
+  "FINO": 2
+}
+
+const cutIds = {"RC0":0, "RC1":1,"RC3":3}
+
+const paperIds = {
+  "TPCVEL": 0,
+  "TPCREC": 1,
+  "TPCSAT": 2,
+  "TPCTIN": 3,
+  "TPCMAT": 4,
+  "TPCBRI": 5,
+  "TPCMAG": 6,
+  "TPCLUX": 7,
+}
+       
+  function handleCustomizeButtonClick(){
+    const token = localStorage.getItem('outil_access_token') ?? "";
+    const locale = (Shopify.locale ?? "fr").toLowerCase();
+    let queryParams = "?lng="+locale;
+    if(currentVariant && currentVariant.sku){
+      queryParams += `&sku=${currentVariant.sku.replace('-WR', '-CRV')}-${locale}`;
+    }
+    
+    if(queryParams.length > 0){
+      queryParams += "&";
+    }
+    queryParams += `token=${token}`
+
+    {% if product.type == "Card" %}
+      const selectedOptions = getSelectedOptions();
+      Object.keys(stringIds).forEach(key => {
+      if(selectedOptions.includes(key))
+          queryParams += "&stringId="+stringIds[key]
+      })
+          Object.keys(paperIds).forEach(key => {
+      if(selectedOptions.includes(key))
+          queryParams += "&paperId="+paperIds[key]
+      })
+          Object.keys(cutIds).forEach(key => {
+      if(selectedOptions.includes(key))
+          queryParams += "&cutId="+cutIds[key]
+      })
+      if(selectedQuantity){
+        queryParams += "&quantity="+selectedQuantity
+      }
+      selectedOptions.some(o=>{
+        if(o.startsWith("ENV")){
+          queryParams +="&enveloppe="+o;
+          return true;
+        }
+        return false
+      })
+    {% endif %}
+    {%- capture urlPath -%}
+    {% case product.type %}
+      {% when "Card" %}
+      CARD_FRONT_ROUTE_SEGMENT+"nouvelle"
+      {% when "Magnet" %}
+      CARD_FRONT_ROUTE_SEGMENT+"nouvelle"
+      {% when "Calendar" %}
+      CALENDAR_FRONT_ROUTE_SEGMENT+"nouveau"
+      {% when "Book" %}
+      ALBUM_FRONT_ROUTE_SEGMENT+"nouveau"
+      {% else %}
+      OTHER_FRONT_ROUTE_SEGMENT+"nouveau"
+    {%- endcase -%}
+    {% endcapture %}
+    {% if urlPath %}
+      const url = OUTIL_PERSO_URL + {{urlPath | strip}}+queryParams
+
+      location.href = url;
+    {% endif %}
+  }
+       {% unless product.tags contains "Produit 3D" %}
+             const customizeButton = document.getElementById("customize-button")    
+      customizeButton.addEventListener("click",()=>{handleCustomizeButtonClick()})
+    {% endunless %}
+   });
+
+
+</script>

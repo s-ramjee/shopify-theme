@@ -1,0 +1,411 @@
+{% comment %} 
+  params:
+  item: cart line item object
+{% endcomment %}
+
+<div class="edit-text button-primary" id="item-{{ item.key }}-options" role="button">{{ 'cart.general.edit_options' | t }}</div>
+
+<div class="custom-modal-overlay" id="overlay-{{ item.key }}"></div>
+<div class="custom-modal" id="modal-{{ item.key }}">
+  <span id="modal-dismiss-{{ item.key }}" class="modal-dismiss">{%- render 'icon-library', id:'cross', width:'16px', height:'16px'-%}</span>
+  <div class="modal-title">{{ 'cart.general.edit_options' | t }}</div>
+  <div class="modal-content-block">
+    {% if item.image %}
+      {% render 'rimg', img: item.image, alt: item.title, size: '120x' %}
+    {% elsif item.product.metafields.custom.original_product.value %}
+      {% render 'rimg', img: item.product.metafields.custom.original_product.value.featured_image, alt: item.product.metafields.custom.original_product.value.featured_image.alt, size: '120x' %}
+    {% else %}
+      {{ 'image' | placeholder_svg_tag: 'placeholder--image' }}
+    {% endif %}
+
+    <h2 class="cart-item--content-title">
+      <a>
+        {{ item.product.title }}
+      </a>
+    </h2>
+
+    {% if item.product.vendor != blank %}
+      <div class="car-item--product-vendor">
+        {{ item.product.vendor }}
+      </div>
+    {% endif %}
+  </div>
+  <div class="modal-content-block" options>
+    
+  </div>
+  <div class="modal-content-block modal-content-footer">
+      <div class="button-primary product-form--atc-button mdc-ripple-surface mdc-ripple-upgraded my-2 mt-4" role="button" id="modal-save-{{ item.key }}">{{ 'cart.code_promo.valider' | t }}</div>
+  </div>
+</div>
+
+<script>
+  {
+    function setCurrentOptions() {
+      const options = [];
+
+      {% for tag in item.product.tags %}
+        {% if tag contains 'option__' %}
+          {% assign tag_split = tag | split: "__" %}
+          {% assign option_name = tag_split.last %}
+          {% assign option_name = option_name | replace: "(", "" %}
+          {% assign option_name = option_name | replace: ")", "" %}
+          {% assign option_name = option_name | replace: " ", "_" %}
+          {% assign option_name = option_name | replace: "é", "e" %}
+          {% assign translation_key = option_name | prepend: "product.options." %}
+          {%- capture display_text -%}
+            {{ translation_key | t }}
+          {%- endcapture -%}
+          {% unless display_text contains "Translation missing" %}
+            options.push(`{{ display_text }}`);
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+
+      options.forEach((option) => {
+        const elements = document.querySelectorAll("[id='modal-{{ item.key }}'] select option");
+        elements.forEach((element) => {
+          if(option.toLowerCase().trim().includes(element.id.toLowerCase().split('+')[0].trim())) {
+            const select = element.parentNode;
+            select.selectedIndex = Array.from(select.children).indexOf(element);
+          }
+        });
+      });
+    }
+
+    function getOptions() {
+      const options = {};
+      
+      {% assign original_product = item.product.metafields.custom.original_product.value %}
+      {% assign original_variant = original_product.variants.first %}
+
+      {% for option in original_variant.metafields.custom.options.value %} 
+        {% unless option.option_type.value == 'Colour' or option.option_name.value == 'Colour' %}  
+        {
+        const values = [];
+
+        {% for option_value in option.option_values.value %}
+          values.push({
+              value: "{{option_value.option_value.value}}",
+              key: "{{ option_value.key.value }}",
+              price_increase: {{option_value.price_increase.value}} {%- if option_value.option_icon -%}, option_icon: "{{option_value.option_icon.value | image_url}}"  {%- endif -%},
+              id: "{{ option_value.key.value }}"
+            })
+
+          {% if option.option_type.value == color_key %}
+              colorsKeys["{{ option_value.key.value }}"] = "{{ option_value.option_value.value }}"
+          {% endif %}
+        {% endfor %}
+
+        options['{{option.option_type.value}}'] = { name: "{{ option.option_name.value }}", values: values };
+      }
+          {% endunless %}  
+        {% endfor %}
+
+      return options;
+    }
+
+    function clearOptions() {
+      const options = document.querySelector("[id='modal-{{ item.key }}'] div[options]");
+
+      while(options.firstChild) {
+        options.firstChild.remove();
+      }
+
+      return options;
+    }
+
+    function setOptions(options) {
+      console.log(options);
+
+      const optionsContainer = clearOptions();
+      Object.keys(options).forEach(key => {
+        if(key != "{{color_key | strip}}") {
+          const element = createOption(key, options[key]);
+          optionsContainer.appendChild(element);
+        }
+      })
+
+      setCurrentOptions();
+    }
+
+    function createOption(key, optionObject){
+      const selectList = document.createElement("select");
+      selectList.className = "form-field-input form-field-select form-field-filled options-selection__input-select";
+      selectList.setAttribute('id',name+"{{product.id}}");
+      selectList.setAttribute('options', key);
+
+      optionObject.values.forEach(option_value => {
+        const option = document.createElement("option");
+        option.value = option_value.key;
+        option.text = option_value.value;
+        option.setAttribute('id', name + "{{ product.id }}" + option_value.value);
+        option.setAttribute('price_increase', option_value.price_increase);
+        selectList.appendChild(option);
+      })
+
+      const label = document.createElement("label");
+      label.className = "form-field-title options-selection__select-label";
+      label.innerText = optionObject.name.split(' ')[0];
+
+      const selectDiv = document.createElement("div");
+      selectDiv.className ="options-selection__select"
+      selectDiv.appendChild(label);
+
+      const containerDiv = document.createElement("div");
+      containerDiv.className= "form-field-row options-selection__input-select-wrapper";
+      containerDiv.appendChild(selectList);
+      
+      const chevronDiv = document.createElement("div");
+      chevronDiv.className="options-selection__input-select-chevron";
+      chevronDiv.innerHTML = `
+        <svg aria-hidden="true" focusable="false" role="presentation" width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4.5L7 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+            <path d="M4 4.5L1 1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"></path>
+          </svg>
+          `
+      containerDiv.append(chevronDiv);
+
+      const optionDiv = document.createElement("div");
+      optionDiv.className= "options-selection__select-wrapper mt-2"
+    
+      selectDiv.append(label);
+      selectDiv.append(containerDiv);
+
+      optionDiv.append(selectDiv);
+      return optionDiv;
+    }
+
+    function getSelectedOptions() {
+      const selects = document.querySelectorAll("[id='modal-{{ item.key }}'] div[options] select");
+      const selectedOptions = {};
+
+      selects.forEach(s => {
+        selectedOptions[s.getAttribute('options')] = s.value;
+      })
+
+      return selectedOptions;
+    }
+
+    function setModalVisible(visible) {
+      document.getElementById('overlay-{{ item.key }}').classList.toggle('is-visible', visible);
+      document.getElementById('modal-{{ item.key }}').classList.toggle('is-visible', visible);
+
+      if(visible) { 
+        setOptions(getOptions());
+      } else {
+        clearOptions();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('item-{{ item.key }}-options').addEventListener('click', () => setModalVisible(true));
+      document.getElementById('overlay-{{ item.key }}').addEventListener('click', () => setModalVisible(false));
+      document.getElementById('modal-dismiss-{{ item.key }}').addEventListener('click', () => setModalVisible(false));
+      document.getElementById('modal-save-{{ item.key }}').addEventListener('click', () => {
+        const selectedOptions = getSelectedOptions();
+
+        const stringIds = {
+          "FIND": 0,
+          "FINA": 1,
+          "FINO": 2
+        };
+
+        const cutIds = {
+          "RC0": 0, 
+          "RC1": 1,
+          "RC3": 3
+        };
+
+        const paperIds = {
+          "TPCVEL": 0,
+          "TPCREC": 1,
+          "TPCSAT": 2,
+          "TPCTIN": 3,
+          "TPCMAT": 4,
+          "TPCBRI": 5,
+          "TPCMAG": 6,
+          "TPCLUX": 7,
+        };
+
+        const button = document.getElementById('modal-save-{{ item.key }}');
+        button.innerHTML = '<div class="options-edit-loader"></div>';
+
+        let headers = {
+          'Content-Type': 'application/json',
+        };
+
+        if(access_token) {
+          headers = {
+            ...headers,
+            'Authorization': `Bearer ${access_token}`
+          };
+        }
+
+        fetch(OUTIL_PERSO_API + 'products/options?t=' + Date.now(), {
+          method: 'PUT',
+          headers: headers,
+          body: JSON.stringify({
+            productID: "gid://shopify/Product/{{ item.product.id }}",
+            payload: {
+              cutId: cutIds[selectedOptions['Cut']] ?? null,
+              enveloppeOption: selectedOptions['Envelopes'] ?? null,
+              paperId: paperIds[selectedOptions['Paper']] ?? null,
+              stringId: stringIds[selectedOptions['Accessories']] ?? null,
+            }
+          })
+        }).then(async () => {
+          const updates = { "{{ item.id }}": 0, [selectedVariantId{{item.key | replace: ':', ''}}] : 1 };
+          await updateCart(updates);
+          const initialTags = {{ item.product.tags | json }}
+          let counter = 0;
+          const productUpdateCheck = async ()=>{
+            if(counter >= 10){
+              window.location.reload()
+            }
+              counter ++;
+              fetch(window.Shopify.routes.root + `products/{{ item.product.handle }}.js`).then(response => response.json())
+                .then(result => {
+              if(result){
+                if(initialTags && initialTags.length > 0){
+                  let reloading = false;
+                  /*console.log("initialTags",initialTags);
+                  console.log("tags", result.tags)*/
+                  initialTags.forEach(tag => {
+                    if(!result.tags.includes(tag)){
+                      reloading = true;
+                      window.location.reload()
+                    }
+                  })
+                  if(!reloading)
+                  setTimeout(() => {productUpdateCheck()}, 1500);
+                }
+              }
+              }).catch(err => {console.log(err)});
+          };
+          productUpdateCheck();
+          //setTimeout(() => {window.location.reload()},3000);
+
+          /*await clearCart();
+          const cookieIdRegex = new RegExp("\\b" + {{ item.variant_id }}+ "\\b", "g");
+          const cookieNewIdRegex = new RegExp("\\b" + selectedVariantId{{item.key | replace: ':', ''}}+ "\\b", "g");
+          const cartCookie = getCookieValue("cart_outil") ?? "";
+          let cartPermalink = "https://{{ request.host }}/cart/";
+          if(cookieIdRegex.test(cartCookie) && ! cookieNewIdRegex.test(cartCookie) ){
+            cartCookie = cartCookie.replace(cookieIdRegex, selectedVariantId{{item.key | replace: ':', ''}});
+          }
+          cartPermalink += cartCookie+"?storefront=true";
+          console.log(cartPermalink);
+          window.location.replace(cartPermalink);*/
+          /*await updateCart({ "{{ item.id }}": 0 });
+          await updateCart({[selectedVariantId{{item.key | replace: ':', ''}}] : 1});
+          setTimeout(() => {window.location.reload()},1750);*/
+        }).catch((error) => {
+          console.error('Error:', error);
+          button.innerHTML = "Erreur lors de la sauvegarde";
+        });
+      });
+    });
+  }
+</script>
+
+<style>
+  .modal-content-footer {
+    width: 50%;
+  }
+
+  .modal-content-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .modal-title {
+    font-size: 24px;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .custom-modal {
+    width: 50vw;
+    max-height: 100vh;
+    height: 100vh;
+    overflow: auto;
+    
+    position: fixed;
+    top: 0;
+    transform: unset;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 24px;
+
+    padding: 40px 80px;
+    border-radius: 0;
+    text-align: center;
+  }
+
+  @media screen and (max-width: 720px) {
+    .custom-modal {
+      width: 90%;
+      transform: translateX(-50%) translateY(-50%);
+      left: 50%;
+      top: 50%;
+      right: unset;
+      padding: 80px 40px;
+      border-radius: 16px;
+      justify-content: flex-start;
+    }
+  }
+
+  .custom-modal-overlay {
+    backdrop-filter: blur(10px);
+  }
+
+  .modal-dismiss {
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    cursor: pointer;
+    background-color: #87AB8A;
+    border-radius: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.25);
+  }
+
+  .modal-dismiss svg { 
+    fill: white;
+    width: 16px;
+    height: 16px;
+  }
+
+  div[options] {
+    width: 100%;
+  }
+
+  .options-edit-loader {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #FFF;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: spin 2s linear infinite;
+  }
+
+  .product-form--atc-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>

@@ -1,0 +1,19 @@
+<section
+  class="account-page account-page-details"
+>
+  <header class="account-page-masthead">
+    <h1 class="account-page-title" style="text-align: left">
+      {{ 'customers.account.welcome' | t }}
+      {{ customer.first_name }}
+    </h1>
+  </header>
+
+  <div class="d-flex account-content">
+    {%- render 'account-nav' -%}
+    <div class="blocks-container">
+      <div class="customer-account-block">
+        {%- render 'album-snippet' -%}
+      </div>
+    </div>
+  </div>
+</section>

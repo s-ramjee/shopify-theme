@@ -1,0 +1,44 @@
+{% schema %}
+  {
+    "name": "AvisVérifiés-avis produit",
+    "settings": [],
+    "presets": [
+      {
+        "name": "AvisVérifiés-avis produit"
+      }
+    ]
+  }
+{% endschema %}
+{% if product %}
+{% assign locale = request.locale.iso_code  %}
+{% assign skus = product.variants.first.sku %}
+{% if product.variants.first.metafields.custom.old_sku %}
+  {% assign skus = skus | append: ',' %}
+  {% assign skus = skus | append:  product.variants.first.metafields.custom.old_sku.value  %}
+  {% endif %}
+
+   {% if product.type == 'Card' %}
+    {% assign starting_price = 0 %}
+      {% for p in product.variants.first.metafields.custom.prices.value.prices.value %}
+          {% assign starting_price = p.price.value %}
+          {% for option in product.variants.first.metafields.custom.options.value %}
+            {% for option_value in option.option_values.value %}
+              {% assign starting_price = starting_price | plus: option_value.price_increase.value %}
+              {% break %}
+            {% endfor %}
+          {% endfor %}
+        {% break %}
+          
+      {% endfor %}
+    {% else %}
+    {% assign starting_price = product.variants.first.price %}
+      {% comment %}
+    {% for variant in product.variants %}
+      {% if starting_price > variant.price %}
+        {% assign starting_price = variant.price %}
+      {% endif %}
+    {% endfor %}
+      {% endcomment %}
+    {% endif %}
+<div class="skeepers_product__reviews" data-product-id="{{ skus }}" data-locale="{{ locale }}" data-price="{{ starting_price | money }}" data-currency="EUR" data-name="{{ product.title }}" data-url="{{ product.url }}" data-image-url="{{ product.featured_image.src}}"></div>
+{% endif %}

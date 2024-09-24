@@ -1,0 +1,91 @@
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const navLinks = document.querySelectorAll(".faq-nav .nav-link");
+    const accordions = document.querySelectorAll(".accordion");
+
+    // Show the first accordion by default
+    accordions[0].classList.add("active");
+
+    navLinks.forEach((link) => {
+      link.addEventListener("click", function () {
+        const target = this.dataset.target;
+        accordions.forEach((accordion) => {
+          if (accordion.id === target) {
+            accordion.classList.add("active");
+          } else {
+            accordion.classList.remove("active");
+          }
+        });
+      });
+    });
+  });
+</script>
+
+<div class="faq-section">
+  <ul class="faq-nav">
+    <li class="nav-link" data-target="accordion1">{{ 'faq.categories.orders' | t }}</li>
+    <li class="nav-link" data-target="accordion2">{{ 'faq.categories.sample' | t }}</li>
+    <li class="nav-link" data-target="accordion2">{{ 'faq.categories.account' | t }}</li>
+    <li class="nav-link" data-target="accordion2">{{ 'faq.categories.shipping' | t }}</li>
+    <li class="nav-link" data-target="accordion2">{{ 'faq.categories.payment' | t }}</li>
+    <li class="nav-link" data-target="accordion2">{{ 'faq.categories.promo_codes' | t }}</li>
+    <li class="nav-link" data-target="accordion2">{{ 'faq.categories.product_options' | t }}</li>
+    <li class="nav-link" data-target="accordion2">{{ 'faq.categories.customization' | t }}</li>
+  </ul>
+
+  <div>
+    <div id="accordion1" class="accordion">
+      <h2>{{ 'faq.categories.orders' | t }}</h2>
+      <div class="answer">
+        <!-- Your answer content here -->
+      </div>
+    </div>
+
+    <div id="accordion2" class="accordion">
+      <h2>{{ 'faq.categories.sample' | t }}</h2>
+      <div class="answer">
+        <!-- Your answer content here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .faq-section .accordion {
+    display: none;
+    margin-bottom: 10px;
+  }
+
+  .faq-section .accordion h2 {
+    cursor: pointer;
+  }
+
+  /* Style for the active accordion (visible) */
+  .faq-section .accordion.active {
+    display: block;
+  }
+
+  /* Style for the navigation links */
+  .faq-section .faq-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+  }
+
+  .faq-section .faq-nav li {
+    margin-right: 15px;
+    cursor: pointer;
+  }
+</style>
+{% schema %}
+{
+  "name": "t:sections.faq.label",
+    "presets": [
+    {
+      "name": "t:sections.faq.presets.name",
+      "category": "t:sections.faq.presets.category"
+    }
+  ]
+}
+{% endschema %}

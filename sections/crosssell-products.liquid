@@ -1,0 +1,48 @@
+<script
+  type="application/json"
+  data-section-id="{{ section.id }}"
+  data-section-type="dynamic-featured-collection"
+></script>
+{% if product.metafields.custom.cross_sell_products %}
+
+  {% assign layout = 'slideshow' %}
+  <section class="featured-collection__container" data-featured-collection>
+    {{ section.settings.title }}
+  
+    <ul
+      class="home-section--content featured-collection__content"
+      data-content
+      data-layout="{{ layout }}"
+    >
+  
+      {% for p in product.metafields.custom.cross_sell_products.value %}
+        {%
+          render 'product-grid-item',
+          product: p,
+          display_main_collection: true
+        %}
+      {% endfor %}
+  
+    </ul>
+  
+  </section>
+
+{% endif %}
+
+{% schema %}
+  {
+    "name": "Produits cross sell",
+    "settings": [
+      {
+        "type": "text",
+        "id": "title",
+        "label": "Titre"
+      }
+    ],
+    "presets": [
+      {
+        "name": "Produits cross sell"
+      }
+    ]
+  }
+{% endschema %}
