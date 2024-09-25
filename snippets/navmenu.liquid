@@ -18,6 +18,7 @@
 {% assign menu_list = linklists[menu].links %}
 {% assign menu_title = linklists[menu].title %}
 <h1>Shanish Test</h1>
+<button onclick="testFunction()"></button>
 <ul
   class="navmenu navmenu-depth-1"
   data-navmenu
@@ -189,3 +190,10 @@
     </li>
     {% endif %}
 </ul>
+<script>
+
+  function testFunction(){
+    alert("This is a test button");
+  }
+
+</script>
