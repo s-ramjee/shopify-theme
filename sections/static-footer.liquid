@@ -237,7 +237,7 @@
                 
             {% endif %}
 
-            {% render 'footer-block' for block: block inline: inline %}
+            {% render 'footer-block' for block, block: block, inline: inline %}
             {% assign inline = block.settings.share %}
             {% if inline != true %}
               </div>
@@ -531,3 +531,13 @@
   }
 }
 {% endschema %}
+{% comment %}
+
+This file has been rewritten to preserve the original behavior.
+
+---
+Changes:
+- from: "{% render 'footer-block' for block: block inline: inline %}"
+  to: "{% render 'footer-block' for block, block: block, inline: inline %}"
+  position: 12985..13052
+{% endcomment %}

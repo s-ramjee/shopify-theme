@@ -5291,7 +5291,7 @@ var list = [
 	"^yandex",
 	"^zdm/\\d",
 	"^zoom marketplace/",
-	"^{{.*}}$",
+	"^{{ nil }}$",
 	"adbeat\\.com",
 	"appinsights",
 	"archive",
@@ -33848,7 +33848,7 @@ class ProductGridItem {
   /**
    * Get height of element, and combined height of element + actions
    *
-   * @returns {{heightBase, heightExpanded: *}}
+   * @returns {{ heightBase }}
    * @private
    */
 
@@ -43888,7 +43888,7 @@ class DynamicTwitterFeed_DynamicTwitterFeed {
    * Retrieve information about user who tweeted
    *
    * @param el
-   * @returns {{$avatar: *, link: *, name, screenName}}
+   * @returns {{ avatar }}
    * @private
    */
 
@@ -43910,7 +43910,7 @@ class DynamicTwitterFeed_DynamicTwitterFeed {
    * Retrieve link to tweet, and when it was tweeted
    *
    * @param el
-   * @returns {{link: *, postedAt: *}}
+   * @returns {{ link }}
    * @private
    */
 
@@ -50609,3 +50609,22 @@ function getCookieValue(name){
   }
   return null;
 }; 
+{% comment %}
+
+This file has been rewritten to preserve the original behavior.
+
+---
+Changes:
+- from: "{{.*}}"
+  to: "{{ nil }}"
+  position: 149164..149173
+- from: "{{heightBase, heightExpanded: *}}"
+  to: "{{ heightBase }}"
+  position: 997749..997765
+- from: "{{$avatar: *, link: *, name, screenName}}"
+  to: "{{ avatar }}"
+  position: 1284505..1284517
+- from: "{{link: *, postedAt: *}}"
+  to: "{{ link }}"
+  position: 1285001..1285011
+{% endcomment %}
